@@ -2,9 +2,11 @@
 from typing import Optional
 from pydantic import BaseModel
 
+
 # Item Objects
 # There must be a way to better 'map' the item attributes - i.e. nested
 # within ItemCreate.
+
 
 class ItemAttribute(BaseModel):
     trait_type: Optional[str] = None

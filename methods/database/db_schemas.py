@@ -1,8 +1,11 @@
-import enum
+# Database Connectivity/Tooling
 from sqlalchemy import Numeric, Enum, Boolean, Column, ForeignKey, Integer, String, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import LargeBinary
 from .db import Base
+# Utilities
+import enum
+
 
 # Account types
 class AccountType(enum.Enum):

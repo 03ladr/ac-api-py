@@ -5,22 +5,22 @@ abi = [
       "type": "constructor"
     },
     {
-      "anonymous": false,
+      "anonymous": False,
       "inputs": [
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "address",
           "name": "owner",
           "type": "address"
         },
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "address",
           "name": "approved",
           "type": "address"
         },
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
@@ -30,22 +30,22 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": false,
+      "anonymous": False,
       "inputs": [
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "address",
           "name": "owner",
           "type": "address"
         },
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "address",
           "name": "operator",
           "type": "address"
         },
         {
-          "indexed": false,
+          "indexed": False,
           "internalType": "bool",
           "name": "approved",
           "type": "bool"
@@ -55,10 +55,10 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": false,
+      "anonymous": False,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": False,
           "internalType": "uint256",
           "name": "itemid",
           "type": "uint256"
@@ -68,10 +68,35 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": false,
+      "anonymous": False,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": False,
+          "internalType": "uint256",
+          "name": "itemid",
+          "type": "uint256"
+        },
+        {
+          "indexed": False,
+          "internalType": "address",
+          "name": "oldOwner",
+          "type": "address"
+        },
+        {
+          "indexed": False,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "ItemTransfer",
+      "type": "event"
+    },
+    {
+      "anonymous": False,
+      "inputs": [
+        {
+          "indexed": False,
           "internalType": "uint256",
           "name": "itemid",
           "type": "uint256"
@@ -81,22 +106,22 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": false,
+      "anonymous": False,
       "inputs": [
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "bytes32",
           "name": "role",
           "type": "bytes32"
         },
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "bytes32",
           "name": "previousAdminRole",
           "type": "bytes32"
         },
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "bytes32",
           "name": "newAdminRole",
           "type": "bytes32"
@@ -106,22 +131,22 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": false,
+      "anonymous": False,
       "inputs": [
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "bytes32",
           "name": "role",
           "type": "bytes32"
         },
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "address",
           "name": "account",
           "type": "address"
         },
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "address",
           "name": "sender",
           "type": "address"
@@ -131,22 +156,22 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": false,
+      "anonymous": False,
       "inputs": [
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "bytes32",
           "name": "role",
           "type": "bytes32"
         },
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "address",
           "name": "account",
           "type": "address"
         },
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "address",
           "name": "sender",
           "type": "address"
@@ -156,22 +181,22 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": false,
+      "anonymous": False,
       "inputs": [
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "address",
           "name": "from",
           "type": "address"
         },
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "address",
           "name": "to",
           "type": "address"
         },
         {
-          "indexed": true,
+          "indexed": True,
           "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
@@ -361,6 +386,25 @@ abi = [
           "internalType": "bool",
           "name": "",
           "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "itemTransferCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -663,4 +707,4 @@ abi = [
       "stateMutability": "view",
       "type": "function"
     }
-  ]
+]

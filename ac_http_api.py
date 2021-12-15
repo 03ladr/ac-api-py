@@ -1,21 +1,32 @@
+# Configuration Variables
+from ac_api_config import JWTKEY, ACCESSKEY
 # Cryptography modules
-from methods.crypto import aes_methods, sha_methods
-# FastAPI
-from fastapi import HTTPException, Depends, FastAPI, status
-from fastapi.security import OAuth2PasswordRequestForm
+from methods.cryptography import sha_methods
 # Typing
 from typing import Optional, List
-# API/Database Connectivity/Tooling
+# Database Connectivity/Tooling
+from asyncio import create_task
 from sqlalchemy.orm import Session
+from methods.database.db import ipfs
+from methods.database.db_methods import load_db, populate_db, get_db
+# On-Chain Connectivity/Tooling
+from methods.onchain.onchain_config import w3, contract
+from methods.onchain.onchain_objects import TXReqs
+# FastAPI Dependencies/Tooling
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
-# Local modules
-from ac_api_config import *
+from fastapi import HTTPException, Depends, FastAPI, status
+from fastapi.security import OAuth2PasswordRequestForm
+from methods.fastapi.fastapi_config import oauth2_scheme
+from methods.fastapi.fastapi_objects import Token, TokenData, fastapi_tags
+# Item and User Modules
 from methods.items import item_methods, item_objects
 from methods.users import user_methods, user_objects
+# Utilities
+from datetime import datetime, timedelta
 
+tags = fastapi_tags
 ### WEB3 FILTER -> DB POPULATION ###
-asyncio.create_task(populate_db())
+create_task(populate_db())
 
 ### FASTAPI INIT ###
 app = FastAPI()
@@ -47,29 +58,24 @@ async def get_current_user(
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = user_methods.get_user_by(db, value)
-    if user is None:
+    db_user = user_methods.get_user_by(db, value)
+    if db_user is None:
         raise credentials_exception
-    return user
+    return db_user
 
 # Checks if user is operator
-async def is_operator(current_user: user_objects.User = Depends(get_current_user)):    
-    isoperator = user_methods.is_operator(contract, current_user)
-    if not isoperator:
+async def get_operator(current_user: user_objects.User = Depends(get_current_user)):
+    operator = user_methods.is_operator(contract, current_user)
+    if not operator:
         raise HTTPException(status_code=403, detail="Not an operator account.")
-    return isoperator
+    return operator
 
 # Grants/denies admin access
-async def admin_access(accesskey: str):
-    verified = sha_methods.verify_hash(accesskey, ACCESSKEY)
-    if not verified:
+def admin_access(accesskey: str):
+    admin_bool = sha_methods.verify_hash(accesskey, ACCESSKEY)
+    if not admin_bool:
         raise HTTPException(status_code=403, detail="Access denied.")
-    return verified
-
-# Creates transaction tuple
-async def send_tx(user, accesskey):
-    privatekey = aes_methods.aes_decrypt(user.accesskey, accesskey)
-    return TXSender(publickey=user.publickey, privatekey=privatekey) 
+    return admin_bool
 
 ### API METHODS ###
 ## User Methods ##
@@ -78,12 +84,12 @@ async def send_tx(user, accesskey):
 async def create_user(user_obj: user_objects.UserBase, db: Session = Depends(get_db)):
     db_username = user_methods.get_user_by(db, user_obj.username)
     db_email = user_methods.get_user_by(db, user_obj.email)
-    if db_username or db_email:
-        raise HTTPException(
-            status_code=400, detail="User already registered."
-        )  # Find a different way to query existence
-    created_user = user_methods.create_user(db, w3, user_obj)
-    return created_user
+    if db_username:
+        raise HTTPException(status_code=400, detail="Username {username} has already been registered.".format(username=user_obj.username))
+    elif db_email:
+        raise HTTPException(status_code=400, detail="Email {email} registered.".format(email=user_obj.email))
+    new_user = user_methods.create_user(db, w3, user_obj)
+    return new_user
 
 # Get current logged in User object
 @app.get("/users/current", response_model=user_objects.UserDisplay, tags=[tags[0]])
@@ -93,24 +99,32 @@ async def current_user(current_user: user_objects.User = Depends(get_current_use
 # See owned items
 @app.get("/users/items", response_model=List[item_objects.Item], tags=[tags[0]])
 async def view_items(current_user: user_objects.User = Depends(get_current_user)):
-    items = current_user.items
-    if not items:
+    #db_items = current_user.items
+    db_items = "notImplemented"
+    if not db_items:
         raise HTTPException(status_code=404, detail="No items found.")
-    return items
+    return db_items
 
 # Transfer item
-@app.post("/users/items", tags=[tags[0]])
+@app.post("/users/items/transfer", tags=[tags[0]])
 async def transfer_item(
-    itemid: int,
-    receiver: user_objects.UserID,
+    item_id: int,
+    receiver_id: user_objects.UserID,
+    passkey: str,
     current_user: user_objects.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    transferred = item_methods.transfer_item(db, w3, contract, itemid, receiver, send_tx(current_user, accesskey))
-    if not transferred:
+    transferred_item = item_methods.transfer_item(
+            item_id, user_methods.get_user_publickey(db, receiver_id), TXReqs(
+                publickey=current_user.publickey, 
+                privatekey=current_user.accesskey, 
+                passkey=passkey
+            )
+        )
+    if not transferred_item:
         raise HTTPException(status_code=400, detail="Transfer failed.")
     return "Item {item} transferred to user {receiver}.".format(
-        item=itemid, receiver=receiverid
+        item=item_id, receiver=receiver_id
     )
 
 ## Operator Methods ##
@@ -118,23 +132,31 @@ async def transfer_item(
 @app.post("/items/create", tags=[tags[1]])
 async def create_item(
     item_obj: item_objects.ItemCreate,
-    operator: user_objects.User = Depends(is_operator),
-    db: Session = Depends(get_db),
+    passkey: str,
+    current_operator: user_objects.User = Depends(get_operator),
+    db: Session = Depends(get_db)
 ):
-    itemid = item_methods.create_item(contract, ipfs, item_obj, operator.publickey)
-    if not itemid:
+    created_item = item_methods.create_item(
+            ipfs, item_obj, TXReqs(
+                publickey=current_operator.publickey,
+                privatekey=current_operator.accesskey,
+                passkey=passkey
+            )
+        )
+    if not created_item:
         raise HTTPException(status_code=400, detail="Item creation failed.")
     return "Item created."
 
 ## Verification Methods ##
 # Verifying item
 @app.get("/items/verify/id={itemid}", tags=[tags[4]])
-async def verify_item(itemid: int, db: Session = Depends(get_db)):
-    item = item_methods.get_item(db, itemid)
-    if not item:
-        raise HTTPException(status_code=404, detail="Item unknown/unauthenticated!")
+async def verify_item(item_id: int, db: Session = Depends(get_db)):
+    item_obj = item_methods.get_item(db, item_id)
+    if not item_obj:
+        raise HTTPException(
+            status_code=404, detail="Item unknown/unauthenticated!")
     return "Item {itemid} is authentic. Owned by User: {userid}.".format(
-        itemid=itemid, userid=item.owner_id
+        itemid=item_id, userid=item_obj.owner_id
     )
 
 ## Administrative Methods ##
@@ -142,7 +164,7 @@ async def verify_item(itemid: int, db: Session = Depends(get_db)):
 @app.post("/users/set", response_model=user_objects.UserDisplay, tags=[tags[2]])
 async def set_operator(
     accesskey: str, user_attr: str, user_brand: str, db: Session = Depends(get_db)
-):
+):    
     admin_access(accesskey)
 
     db_user = user_methods.set_operator(db, contract, user_attr, user_brand)
@@ -156,7 +178,7 @@ async def set_operator(
 )
 def get_user(user_attr: str, accesskey: str, db: Session = Depends(get_db)):
     admin_access(accesskey)
-    
+
     db_user = user_methods.get_user_by(db, user_attr)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -168,16 +190,16 @@ def get_users(
     accesskey: str, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 ):
     admin_access(accesskey)
-    
+
     db_users = user_methods.get_users(db, skip, limit)
     return db_users
 
 # Display item details by value
 @app.get("/items/get/item={itemid}", response_model=item_objects.Item, tags=[tags[2]])
-def get_item(accesskey: str, itemid: int, db: Session = Depends(get_db)):
+def get_item(accesskey: str, item_id: int, db: Session = Depends(get_db)):
     admin_access(accesskey)
 
-    db_item = item_methods.get_item(db, itemid)
+    db_item = item_methods.get_item(db, item_id)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return db_item
@@ -205,5 +227,6 @@ async def login_jwt_access(
             detail="Incorrect username or password",
         )
     jwt_expiry = timedelta(minutes=30)
-    access_token = create_jwt(data={"id": str(user.id)}, expires_delta=jwt_expiry)
+    access_token = create_jwt(
+        data={"id": str(user.id)}, expires_delta=jwt_expiry)
     return {"access_token": access_token}

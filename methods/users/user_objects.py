@@ -2,11 +2,12 @@
 from typing import List, Optional
 from pydantic import BaseModel, constr
 from ..items.item_objects import Item
-from ..db.db_schemas import AccountType
+from ..database.db_schemas import AccountType
 
 
 # User Objects
 UserID = constr(min_length=10, max_length=10)
+
 
 class UserBase(BaseModel):
     username: Optional[str] = None
