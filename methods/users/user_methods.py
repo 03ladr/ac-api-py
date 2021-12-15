@@ -13,7 +13,9 @@ from sqlalchemy import or_
 from ..db import db_schemas
 from . import user_objects
 
+OPERATOR_ROLE = "0x97667070c54ef182b0f5858b034beac1b6f3089aa2d3188bb1e8929f4fa9b929"
 
+### User Methods ###
 # User creation
 def create_user(db: Session, w3, user: user_objects.User):
     account = w3.eth.account.create()
@@ -42,19 +44,16 @@ def create_user(db: Session, w3, user: user_objects.User):
     # Returning user object
     return db_user
 
-
-# Setting user as operator
-def set_operator(db: Session, user_attr: str, brand: str):
+# Verifying user by password
+def verify_user(db: Session, user_attr: str, passkey: str):
     db_user = get_user_by(db, user_attr)
-    db.query(db_schemas.User).filter(db_schemas.User.id == db_user.id).update(
-        {"type": "operator", "brand": brand}
-    )
-    db.commit()
-    db.refresh(db_user)
-
+    if not db_user:
+        return False
+    if not sha_methods.verify_hash(passkey, db_user.passkey):
+        return False
+    
     # Returning user object
     return db_user
-
 
 # Gets user by either username, publickey, email or ID
 def get_user_by(db: Session, user_attr: str):
@@ -70,23 +69,32 @@ def get_user_by(db: Session, user_attr: str):
         )
         .first()
     )
-
+    
     # Returning user object
     return db_user
-
 
 # Get all users
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(db_schemas.User).offset(skip).limit(limit).all()
 
-
-# Verifying user by password
-def verify_user(db: Session, user_attr: str, passkey: str):
+### Operator Methods ###
+# Setting user as operator
+def set_operator(db: Session, contract, user_attr: str, brand: str):
     db_user = get_user_by(db, user_attr)
-    if not db_user:
-        return False
-    if not sha_methods.verify_hash(passkey, db_user.passkey):
-        return False
+    contract.functions.grantRole(OPERATOR_ROLE, db_user.publickey).transact({"from":"0x5388004a20e069709045DDEAC684586986472747"})
+    db.query(db_schemas.User).filter(db_schemas.User.id == db_user.id).update(
+        {"type": "operator", "brand": brand}
+    )
+    db.commit()
+    db.refresh(db_user)
 
     # Returning user object
     return db_user
+
+# Verifies that user is operator. Returns true/false
+def is_operator(contract, user: user_objects):
+    status = contract.functions.hasRole(OPERATOR_ROLE, user.publickey)
+    if user.type == db_schemas.AccountType.operator and status:
+        return True
+    else:
+        return False

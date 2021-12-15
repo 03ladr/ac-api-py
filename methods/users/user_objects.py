@@ -1,12 +1,13 @@
 # Typing
 from typing import List, Optional
-from pydantic import BaseModel
-from ..items.item_objects import ItemDisplay
+from pydantic import BaseModel, constr
+from ..items.item_objects import Item
 from ..db.db_schemas import AccountType
-from ..vars.strids import UserID
 
 
 # User Objects
+UserID = constr(min_length=10, max_length=10)
+
 class UserBase(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
@@ -27,7 +28,7 @@ class UserDisplay(BaseModel):
 class User(UserDisplay):
     accesskey: str
     brand: Optional[str] = None
-    items: List[ItemDisplay] = []
+    items: List[Item] = []
 
     class Config:
         orm_mode = True

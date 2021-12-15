@@ -22,14 +22,10 @@ class User(Base):
     email = Column(String, unique=True, nullable=True)
     type = Column(Enum(AccountType), server_default="user")
     brand = Column(String, unique=True, nullable=True)
-    items = relationship("Item", back_populates="owner")
 
 
 # Item Table
 class Item(Base):
     __tablename__ = "items"
 
-    id = Column(LargeBinary, primary_key=True, index=True)
-
-    owner_id = Column(String, ForeignKey("users.id"))
-    owner = relationship("User", back_populates="items")
+    id = Column(Integer, primary_key=True, index=True)
