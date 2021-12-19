@@ -18,12 +18,12 @@ OPERATOR_ROLE = "0x97667070c54ef182b0f5858b034beac1b6f3089aa2d3188bb1e8929f4fa9b
 # User creation
 def create_user(db: Session, w3, user: user_objects.User):
     account = w3.eth.account.create()
-    pubkey, privkey_raw = account.address, account.privateKey.hex()
-
+    pubkey, privkey_raw = bytes(account.address, 'utf-8'), account.privateKey.hex()
+    
     # Encrypting private key
     # USERS MUST STORE KEY WHERE IT WILL NOT BE LOST
     accesskey = aes_methods.aes_encrypt(privkey_raw, user.passkey)
-
+    
     # Hashing user password
     passkey = sha_methods.create_hash(user.passkey)
 
@@ -63,7 +63,7 @@ def get_user_by(db: Session, user_attr: str):
         .filter(
             or_(
                 db_schemas.User.username == user_attr,
-                db_schemas.User.publickey == user_attr,
+                db_schemas.User.publickey == bytes(user_attr, 'utf-8'),
                 db_schemas.User.email == user_attr,
                 db_schemas.User.id == user_attr,
             )
@@ -74,7 +74,7 @@ def get_user_by(db: Session, user_attr: str):
     # Returning user object
     return db_user
 
-
+# Get public key of user
 def get_user_publickey(db: Session, user_attr: str):
     db_user = get_user_by(db, user_attr)
     return db_user.publickey
@@ -86,10 +86,10 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 
 
 ### Operator Methods ###
-# Setting user as operator
+# Set user as operator
 def set_operator(db: Session, contract, user_attr: str, brand: str):
     db_user = get_user_by(db, user_attr)
-    contract.functions.grantRole(OPERATOR_ROLE, db_user.publickey).transact(
+    contract.functions.grantRole(OPERATOR_ROLE, db_user.publickey.decode()).transact(
         {"from": "0x5388004a20e069709045DDEAC684586986472747"})
     db.query(db_schemas.User).filter(db_schemas.User.id == db_user.id).update(
         {"type": "operator", "brand": brand}
@@ -101,9 +101,9 @@ def set_operator(db: Session, contract, user_attr: str, brand: str):
     return db_user
 
 
-# Verifies that user is operator. Returns user object if true, false if not.
+# Verify that user is operator. Returns user object if true, false if not.
 def is_operator(contract, user: user_objects.User):
-    status = contract.functions.hasRole(OPERATOR_ROLE, user.publickey)
+    status = contract.functions.hasRole(OPERATOR_ROLE, user.publickey.decode())
     if user.type == db_schemas.AccountType.operator and status:
         return user
     else:

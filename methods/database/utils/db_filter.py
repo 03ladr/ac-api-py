@@ -1,6 +1,6 @@
 # On-Chain Connectivity/Tooling
 from ...onchain.abi import abi
-# Item Modules
+# Database Item 
 from ..db_schemas import Item
 
 
@@ -17,14 +17,14 @@ class ItemFilters:
         if mints:
             for mint in mints:
                 itemid = mint['args']['itemid']
-                db_item = db_schemas.Item(id=itemid)
+                db_item = Item(id=itemid)
                 self.db.add(db_item)
                 self.db.commit()
 
         if burns:
             for burn in burns:
                 itemid = mint['args']['itemid']
-                db_item = db_schemas.Item(id=itemid)
+                db_item = Item(id=itemid)
                 self.db.delete(db_item)
                 self.db.commit()
 

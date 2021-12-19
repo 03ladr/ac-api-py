@@ -15,21 +15,22 @@ class UserBase(BaseModel):
     passkey: str
 
 
-class UserDisplay(BaseModel):
+class User(BaseModel):
     id: UserID
-    type: AccountType
     username: str
     email: str
-    publickey: str
+    publickey: bytes
 
     class Config:
         orm_mode = True
 
 
-class User(UserDisplay):
-    accesskey: str
+class Operator(User):
     brand: Optional[str] = None
-    items: List[Item] = []
 
     class Config:
         orm_mode = True
+
+
+class Account(Operator):
+    type: AccountType

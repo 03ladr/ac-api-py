@@ -8,53 +8,50 @@ from sqlalchemy import or_
 from . import item_objects
 from ..database import db_schemas
 from ..users.user_objects import User
-from .utils.create_metadata import create_metadata
-from .utils.mint_nft import mint_nft
-
+from ..onchain.onchain_methods import sendtx
 
 # Item creation
 def create_item(ipfs, item_obj: item_objects.ItemCreate, TXReqs):
-    # Generating NFT metadata URL (hosted on IPFS)
-    metadata = create_metadata(ipfs, item_obj)
-    
-    # Mint NFT via smart contract
-    itemid = mint_nft(TXReqs.contract, metadata, TXReqs.publickey)
-
-    # Returns None if Item creation failed
-    if not itemid:
-        return None
-
+    # Generates NFT metadata URL (hosted on IPFS)
+    metadataURI = create_metadata(ipfs, item_obj)
+    # Mints Item NFT via smart contract
+    minted = sendtx(TXReqs.contract.functions.mintItemToken(metadataURI), TXReqs)
+    # Returns False if Item creation failed
+    if not minted:
+        return False
     # Returns True indicating successful creation
     return True
 
+# Create and host item token metadata
+def create_metadata(item_obj: item_objects.ItemCreate):
+    item_json = json.loads(item_obj.json())
+    ipfs_metadata = ipfs.add_json(item_json)
+    return "http://127.0.0.1:8080/ipfs/{cid}".format(cid=ipfs_metadata)
 
-# Transfer Item
-def transfer_item(itemid: int, receiver: str, TXReqs):
-    try:
-        rawtx = TXReqs.contract.functions.transferItemToken(itemid, receiver).buildTransaction(
-        {'from': TXReqs.publickey, 'gasPrice': TXReqs.w3.eth.gas_price, 'nonce': TXReqs.w3.eth.getTransactionCount(TXReqs.publickey)})
-        signedtx = TXReqs.w3.eth.account.signTransaction(rawtx, TXReqs.decrypt_privatekey())
-        TXReqs.w3.eth.sendRawTransaction(signedtx.rawTransaction)
-    except:
+# Transfer item token
+def transfer_item(TXReqs, itemid: int, receiver: str):
+    # Transfers item NFT via smart contract
+    receiver = '0x2499f0d596a9e6C634Bf6191f6B5B6FB33E89997'
+    transferred = sendtx(TXReqs.contract.functions.transferItemToken(itemid, receiver), TXReqs)
+    # Returns False if Item transfer failed
+    if not transferred:
         return False
-    
+    # Returns True indicating successful transfer
     return True
 
-
-# Gets item by ID
-def get_item(db: Session, itemid: int, sender: str):
+# Get item by ID
+def get_item(db: Session, TXReqs, itemid: int):
+    # Verifies items existence in-db
     itemid = db.query(db_schemas.Item).filter(
         db_schemas.Item.id == itemid).first().id
-    try:
-        uri = contract.functions.tokenURI(itemid).call({"from": sender})
-        url = urlopen(uri)
-        metadata = json.load(url.read())
-    except:
-        return False
+    # Returns JSON Metadata Object
+    return get_metadata(TXReqs, itemid)
 
+# Get item token metadata
+def get_metadata(TXReqs, itemid):
+    # Fetches metadata URI -> loads as JSON
+    rawuri = TXReqs.contract.functions.tokenURI(itemid).call()
+    uri = urlopen(rawuri)
+    metadata = json.load(uri)
+    metadata['id'] = itemid
     return metadata
-
-
-# Get all items
-def get_items(db: Session, skap: int = 0, limit: int = 100):
-    return db.query(db_schemas.Item).offset(skip).limit(limit).all()

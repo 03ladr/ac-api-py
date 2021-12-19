@@ -18,9 +18,9 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(String, primary_key=True, index=True)
-    publickey = Column(String, unique=True, index=True)
-    accesskey = Column(String, unique=True)
-    passkey = Column(String)
+    publickey = Column(LargeBinary, unique=True, index=True)
+    accesskey = Column(LargeBinary, unique=True)
+    passkey = Column(LargeBinary)
     username = Column(String, unique=True, nullable=True)
     email = Column(String, unique=True, nullable=True)
     type = Column(Enum(AccountType), server_default="user")

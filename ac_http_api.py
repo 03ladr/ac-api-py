@@ -24,11 +24,13 @@ from methods.users import user_methods, user_objects
 # Utilities
 from datetime import datetime, timedelta
 
-tags = fastapi_tags
+### DB INIT ###
+load_db()
 ### WEB3 FILTER -> DB POPULATION ###
 create_task(populate_db())
 
 ### FASTAPI INIT ###
+tags = fastapi_tags # Don't ask
 app = FastAPI()
 
 ### API FUNCTIONS ###
@@ -80,7 +82,7 @@ def admin_access(accesskey: str):
 ### API METHODS ###
 ## User Methods ##
 # Account creation
-@app.post("/users/create", response_model=user_objects.UserDisplay, tags=[tags[0]])
+@app.post("/users/create", response_model=user_objects.User, tags=[tags[0]])
 async def create_user(user_obj: user_objects.UserBase, db: Session = Depends(get_db)):
     db_username = user_methods.get_user_by(db, user_obj.username)
     db_email = user_methods.get_user_by(db, user_obj.email)
@@ -92,12 +94,12 @@ async def create_user(user_obj: user_objects.UserBase, db: Session = Depends(get
     return new_user
 
 # Get current logged in User object
-@app.get("/users/current", response_model=user_objects.UserDisplay, tags=[tags[0]])
+@app.get("/users/current", response_model=user_objects.User, tags=[tags[0]])
 async def current_user(current_user: user_objects.User = Depends(get_current_user)):
     return current_user
 
 # See owned items
-@app.get("/users/items", response_model=List[item_objects.Item], tags=[tags[0]])
+@app.get("/users/items", tags=[tags[0]])
 async def view_items(current_user: user_objects.User = Depends(get_current_user)):
     #db_items = current_user.items
     db_items = "notImplemented"
@@ -116,7 +118,6 @@ async def transfer_item(
 ):
     transferred_item = item_methods.transfer_item(
             item_id, user_methods.get_user_publickey(db, receiver_id), TXReqs(
-                publickey=current_user.publickey, 
                 privatekey=current_user.accesskey, 
                 passkey=passkey
             )
@@ -138,7 +139,6 @@ async def create_item(
 ):
     created_item = item_methods.create_item(
             ipfs, item_obj, TXReqs(
-                publickey=current_operator.publickey,
                 privatekey=current_operator.accesskey,
                 passkey=passkey
             )
@@ -161,7 +161,7 @@ async def verify_item(item_id: int, db: Session = Depends(get_db)):
 
 ## Administrative Methods ##
 # Set account as operator by value (username, public key, id, email)
-@app.post("/users/set", response_model=user_objects.UserDisplay, tags=[tags[2]])
+@app.post("/users/set", response_model=user_objects.User, tags=[tags[2]])
 async def set_operator(
     accesskey: str, user_attr: str, user_brand: str, db: Session = Depends(get_db)
 ):    
@@ -195,11 +195,11 @@ def get_users(
     return db_users
 
 # Display item details by value
-@app.get("/items/get/item={itemid}", response_model=item_objects.Item, tags=[tags[2]])
+@app.get("/items/get/item={itemid}", tags=[tags[2]])
 def get_item(accesskey: str, item_id: int, db: Session = Depends(get_db)):
     admin_access(accesskey)
 
-    db_item = item_methods.get_item(db, item_id)
+    db_item = item_methods.get_item(db, TXReqs(), item_id)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return db_item
