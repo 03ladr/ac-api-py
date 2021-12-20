@@ -9,10 +9,10 @@ class TokenData(BaseModel):
     type: str
 
 ### FastAPI Objects ###
-fastapi_tags = (
+tags = (
     "User Methods",
     "Operator Methods",
-    "Administrative Methods",
+    "Lookup Methods",
     "Utility Endpoints",
     "Item Verification"
 )  # FastAPI visual tags

@@ -8,6 +8,7 @@ from sqlalchemy import or_
 from . import item_objects
 from ..database import db_schemas
 from ..users.user_objects import User
+from ..users.user_methods import get_user_publickey
 from ..onchain.onchain_methods import sendtx
 
 # Item creation
@@ -23,7 +24,7 @@ def create_item(ipfs, item_obj: item_objects.ItemCreate, TXReqs):
     return True
 
 # Create and host item token metadata
-def create_metadata(item_obj: item_objects.ItemCreate):
+def create_metadata(ipfs, item_obj: item_objects.ItemCreate):
     item_json = json.loads(item_obj.json())
     ipfs_metadata = ipfs.add_json(item_json)
     return "http://127.0.0.1:8080/ipfs/{cid}".format(cid=ipfs_metadata)
@@ -31,8 +32,11 @@ def create_metadata(item_obj: item_objects.ItemCreate):
 # Transfer item token
 def transfer_item(TXReqs, itemid: int, receiver: str):
     # Transfers item NFT via smart contract
-    receiver = '0x2499f0d596a9e6C634Bf6191f6B5B6FB33E89997'
-    transferred = sendtx(TXReqs.contract.functions.transferItemToken(itemid, receiver), TXReqs)
+    transferred = sendtx(TXReqs.contract.functions.transferItemToken(
+        itemid,
+        get_user_publickey(receiver)),
+        TXReqs
+        )
     # Returns False if Item transfer failed
     if not transferred:
         return False
@@ -55,3 +59,9 @@ def get_metadata(TXReqs, itemid):
     metadata = json.load(uri)
     metadata['id'] = itemid
     return metadata
+
+# Get items owned by a user
+def get_user_items(TXReqs, address: str):
+    owned_ids = TXReqs.contract.functions.ownedItemTokens(address).call()
+    owned_items = [get_metadata(TXReqs, id) for id in owned_ids]
+    return owned_items

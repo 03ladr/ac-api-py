@@ -17,7 +17,7 @@ from jose import JWTError, jwt
 from fastapi import HTTPException, Depends, FastAPI, status
 from fastapi.security import OAuth2PasswordRequestForm
 from methods.fastapi.fastapi_config import oauth2_scheme
-from methods.fastapi.fastapi_objects import Token, TokenData, fastapi_tags
+from methods.fastapi.fastapi_objects import Token, TokenData, tags
 # Item and User Modules
 from methods.items import item_methods, item_objects
 from methods.users import user_methods, user_objects
@@ -28,9 +28,7 @@ from datetime import datetime, timedelta
 load_db()
 ### WEB3 FILTER -> DB POPULATION ###
 create_task(populate_db())
-
 ### FASTAPI INIT ###
-tags = fastapi_tags # Don't ask
 app = FastAPI()
 
 ### API FUNCTIONS ###
@@ -72,13 +70,6 @@ async def get_operator(current_user: user_objects.User = Depends(get_current_use
         raise HTTPException(status_code=403, detail="Not an operator account.")
     return operator
 
-# Grants/denies admin access
-def admin_access(accesskey: str):
-    admin_bool = sha_methods.verify_hash(accesskey, ACCESSKEY)
-    if not admin_bool:
-        raise HTTPException(status_code=403, detail="Access denied.")
-    return admin_bool
-
 ### API METHODS ###
 ## User Methods ##
 # Account creation
@@ -101,11 +92,10 @@ async def current_user(current_user: user_objects.User = Depends(get_current_use
 # See owned items
 @app.get("/users/items", tags=[tags[0]])
 async def view_items(current_user: user_objects.User = Depends(get_current_user)):
-    #db_items = current_user.items
-    db_items = "notImplemented"
-    if not db_items:
+    owned_items = item_methods.get_user_items(TXReqs(), current_user.publickey.decode())
+    if not owned_items:
         raise HTTPException(status_code=404, detail="No items found.")
-    return db_items
+    return owned_items
 
 # Transfer item
 @app.post("/users/items/transfer", tags=[tags[0]])
@@ -127,6 +117,24 @@ async def transfer_item(
     return "Item {item} transferred to user {receiver}.".format(
         item=item_id, receiver=receiver_id
     )
+
+# Display account details by value (username/public key/id/email)
+@app.get(
+    "/users/get/user={user_attr}", response_model=user_objects.User, tags=[tags[2]]
+)
+def get_user(user_attr: str, db: Session = Depends(get_db)):
+    db_user = user_methods.get_user_by(db, user_attr)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
+
+# Display item details by value
+@app.get("/items/get/item={itemid}", tags=[tags[2]])
+def get_item(item_id: int, db: Session = Depends(get_db)):
+    item_obj = item_methods.get_item(db, TXReqs(), item_id)
+    if item_obj is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item_obj
 
 ## Operator Methods ##
 # Creating item
@@ -158,61 +166,6 @@ async def verify_item(item_id: int, db: Session = Depends(get_db)):
     return "Item {itemid} is authentic. Owned by User: {userid}.".format(
         itemid=item_id, userid=item_obj.owner_id
     )
-
-## Administrative Methods ##
-# Set account as operator by value (username, public key, id, email)
-@app.post("/users/set", response_model=user_objects.User, tags=[tags[2]])
-async def set_operator(
-    accesskey: str, user_attr: str, user_brand: str, db: Session = Depends(get_db)
-):    
-    admin_access(accesskey)
-
-    db_user = user_methods.set_operator(db, contract, user_attr, user_brand)
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found.")
-    return db_user
-
-# Display account details by value (username/public key/id/email)
-@app.get(
-    "/users/get/user={user_attr}", response_model=user_objects.User, tags=[tags[2]]
-)
-def get_user(user_attr: str, accesskey: str, db: Session = Depends(get_db)):
-    admin_access(accesskey)
-
-    db_user = user_methods.get_user_by(db, user_attr)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
-
-# List all users
-@app.get("/users/get/all", response_model=List[user_objects.User], tags=[tags[2]])
-def get_users(
-    accesskey: str, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
-):
-    admin_access(accesskey)
-
-    db_users = user_methods.get_users(db, skip, limit)
-    return db_users
-
-# Display item details by value
-@app.get("/items/get/item={itemid}", tags=[tags[2]])
-def get_item(accesskey: str, item_id: int, db: Session = Depends(get_db)):
-    admin_access(accesskey)
-
-    db_item = item_methods.get_item(db, TXReqs(), item_id)
-    if db_item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return db_item
-
-# List all items
-@app.get("/items/get/all", response_model=List[item_objects.Item], tags=[tags[2]])
-def get_items(
-    accesskey: str, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
-):
-    admin_access(accesskey)
-
-    db_items = item_methods.get_items(db, skip, limit)
-    return db_items
 
 ## Utility Methods ##
 # Create Json Web Token via+and user login
