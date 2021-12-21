@@ -4,6 +4,8 @@ Item Token Methods/Functions
 # Utilities
 import json
 from urllib.request import urlopen
+# Typing
+from typing import List
 # Database tooling
 from sqlalchemy.orm import Session
 # Local modules

@@ -9,10 +9,6 @@ from ..database.db_schemas import AccountType
 # User ID Object
 UserID = constr(min_length=10, max_length=10)
 
-# Account Type Enum Object
-class Account(Operator):
-    type: AccountType
-
 # Base User Object
 class UserBase(BaseModel):
     username: Optional[str] = None
@@ -32,6 +28,13 @@ class User(BaseModel):
 # Operator Object
 class Operator(User):
     brand: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+# Account Type Enum Object
+class Account(Operator):
+    type: AccountType
 
     class Config:
         orm_mode = True

@@ -9,8 +9,8 @@ from typing import Optional, List
 # Database Connectivity/Tooling
 from asyncio import create_task
 from sqlalchemy.orm import Session
-from methods.db.database import ipfs
-from methods.db.db_methods import load_db, populate_db, get_db
+from methods.database.database import ipfs
+from methods.database.db_methods import load_db, populate_db, get_db
 # On-Chain Connectivity/Tooling
 from methods.onchain.onchain_config import w3, contract
 from methods.onchain.onchain_objects import TXReqs
