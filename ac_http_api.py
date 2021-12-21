@@ -80,7 +80,7 @@ async def get_operator(
     operator = user_methods.is_operator(contract, current_user)
     if not operator:
         raise HTTPException(status_code=403, detail="Not an operator account.")
-    return operator
+    return current_user
 
 
 """ API METHODS """
