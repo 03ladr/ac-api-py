@@ -5,22 +5,22 @@ abi = [
       "type": "constructor"
     },
     {
-      "anonymous": False,
+      "anonymous": false,
       "inputs": [
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "address",
           "name": "owner",
           "type": "address"
         },
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "address",
           "name": "approved",
           "type": "address"
         },
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
@@ -30,22 +30,22 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": False,
+      "anonymous": false,
       "inputs": [
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "address",
           "name": "owner",
           "type": "address"
         },
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "address",
           "name": "operator",
           "type": "address"
         },
         {
-          "indexed": False,
+          "indexed": false,
           "internalType": "bool",
           "name": "approved",
           "type": "bool"
@@ -55,10 +55,10 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": False,
+      "anonymous": false,
       "inputs": [
         {
-          "indexed": False,
+          "indexed": false,
           "internalType": "uint256",
           "name": "itemid",
           "type": "uint256"
@@ -68,35 +68,10 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": False,
+      "anonymous": false,
       "inputs": [
         {
-          "indexed": False,
-          "internalType": "uint256",
-          "name": "itemid",
-          "type": "uint256"
-        },
-        {
-          "indexed": False,
-          "internalType": "address",
-          "name": "oldOwner",
-          "type": "address"
-        },
-        {
-          "indexed": False,
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "ItemTransfer",
-      "type": "event"
-    },
-    {
-      "anonymous": False,
-      "inputs": [
-        {
-          "indexed": False,
+          "indexed": false,
           "internalType": "uint256",
           "name": "itemid",
           "type": "uint256"
@@ -106,22 +81,22 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": False,
+      "anonymous": false,
       "inputs": [
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "bytes32",
           "name": "role",
           "type": "bytes32"
         },
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "bytes32",
           "name": "previousAdminRole",
           "type": "bytes32"
         },
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "bytes32",
           "name": "newAdminRole",
           "type": "bytes32"
@@ -131,22 +106,22 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": False,
+      "anonymous": false,
       "inputs": [
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "bytes32",
           "name": "role",
           "type": "bytes32"
         },
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "address",
           "name": "account",
           "type": "address"
         },
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "address",
           "name": "sender",
           "type": "address"
@@ -156,22 +131,22 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": False,
+      "anonymous": false,
       "inputs": [
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "bytes32",
           "name": "role",
           "type": "bytes32"
         },
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "address",
           "name": "account",
           "type": "address"
         },
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "address",
           "name": "sender",
           "type": "address"
@@ -181,22 +156,47 @@ abi = [
       "type": "event"
     },
     {
-      "anonymous": False,
+      "anonymous": false,
       "inputs": [
         {
-          "indexed": True,
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "itemid",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "oldOwner",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
           "internalType": "address",
           "name": "from",
           "type": "address"
         },
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "address",
           "name": "to",
           "type": "address"
         },
         {
-          "indexed": True,
+          "indexed": true,
           "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
@@ -219,6 +219,25 @@ abi = [
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "ItemClaimability",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "OPERATOR_ROLE",
       "outputs": [
@@ -226,6 +245,30 @@ abi = [
           "internalType": "bytes32",
           "name": "",
           "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "UserOwnedItems",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -386,25 +429,6 @@ abi = [
           "internalType": "bool",
           "name": "",
           "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "itemTransferCount",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -588,6 +612,25 @@ abi = [
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "itemid",
+          "type": "uint256"
+        }
+      ],
+      "name": "setItemClaimability",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes4",
           "name": "interfaceId",
           "type": "bytes4"
@@ -686,25 +729,21 @@ abi = [
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        },
-        {
           "internalType": "uint256",
-          "name": "",
+          "name": "itemid",
           "type": "uint256"
         }
       ],
-      "name": "userOwnedItems",
+      "name": "viewItemClaimability",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "bool",
           "name": "",
-          "type": "uint256"
+          "type": "bool"
         }
       ],
       "stateMutability": "view",
       "type": "function"
     }
-]
+  ]
+

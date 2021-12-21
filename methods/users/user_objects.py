@@ -1,9 +1,7 @@
 # Typing
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel, constr
-from ..items.item_objects import Item
 from ..database.db_schemas import AccountType
-
 
 # User Objects
 UserID = constr(min_length=10, max_length=10)

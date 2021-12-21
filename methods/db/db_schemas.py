@@ -1,8 +1,10 @@
+"""
+Database schemas
+"""
 # Database Connectivity/Tooling
-from sqlalchemy import Numeric, Enum, Boolean, Column, ForeignKey, Integer, String, text
-from sqlalchemy.orm import relationship
+from sqlalchemy import Enum, Column, Integer, String
 from sqlalchemy.types import LargeBinary
-from .db import Base
+from .database import Base
 # Utilities
 import enum
 
@@ -32,3 +34,4 @@ class Item(Base):
     __tablename__ = "items"
 
     id = Column(Integer, primary_key=True, index=True)
+    transfers = Column(Integer)
