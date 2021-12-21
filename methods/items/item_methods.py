@@ -103,8 +103,9 @@ def get_item_claimability(TXReqs, itemid: int) -> bool:
     return item_claimability
 
 
-def get_item_transfercount(db, itemid: int) -> None:
+def get_item_transfercount(db, itemid: int) -> int:
     """
     Get transfer count of item
     """
-    return None # Not Implemented
+    transfercount = db.query(db_schemas.Item).filter(db_schemas.Item.id == itemid).one()
+    return transfercount

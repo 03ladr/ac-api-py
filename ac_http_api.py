@@ -127,7 +127,7 @@ async def view_items(
     return owned_items
 
 
-@app.post("/users/items/transfer", tags=[tags[0]])
+@app.post("/items/transfer", tags=[tags[0]])
 async def transfer_item(
         item_id: int,
         receiver_id: user_objects.UserID,
@@ -167,7 +167,7 @@ def get_user(user_attr: str, database: Session = Depends(get_db)) -> user_object
     return db_user
 
 
-@app.get("/items/get/item={itemid}", tags=[tags[2]])
+@app.get("/items/info/item={itemid}", tags=[tags[2]])
 def get_item(item_id: int, database: Session = Depends(get_db)):
     """
     Display item token details by ID
@@ -205,6 +205,27 @@ async def verify_item(item_id: int, database: Session = Depends(get_db)) -> str:
         raise HTTPException(status_code=404,
                             detail="Item unknown/unauthenticated!")
     return f"Item {item_id} is authentic."
+
+
+@app.get("/items/info/claimability")
+async def view_item_claimability(item_id: int,
+                                current_user: user_objects.User = Depends(get_current_user)) -> str:
+    item_claimability = item_methods.get_item_claimability(TXReqs(), itemid)
+    return f"Item claimability status: {item_claimability}"
+
+
+@app.get("/items/info/claimability")
+async def toggle_item_claimability(item_id: int, passkey: str,
+                                current_user: user_objects.User = Depends(get_current_user)) -> str:
+    item_claimability = item_methods.set_item_claimability(TXReqs(privatekey=current_user.privatekey, passkey=passkey), itemid)
+    return f"Item claimability status: {item_claimability}"
+
+
+@app.get("/items/info/transfercount")
+async def view_item_transfercount(item_id: int, db: Session = Depends(get_db),
+                                current_user: user_objects.User = Depends(get_current_user)) -> str:
+    item_claimability = item_methods.get_item_transfercount(db, itemid)
+    return f"Item transfer ciunt: {item_claimability}"
 
 
 @app.post("/token", response_model=Token, tags=[tags[3]])

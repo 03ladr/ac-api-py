@@ -72,7 +72,7 @@ def get_user_by(db: Session, user_attr: str) -> user_objects.User:
             db_schemas.User.publickey == bytes(user_attr, 'utf-8'),
             db_schemas.User.email == user_attr,
             db_schemas.User.id == user_attr,
-        )).first())
+        )).one())
     # Returning user object
     return db_user
 
