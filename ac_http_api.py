@@ -36,7 +36,7 @@ app = FastAPI()
 
 
 """ API FUNCTIONS """
-def create_jwt(data: dict, expires_delta: Optional[timedelta] = None):
+def create_jwt(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """
     Create Json Web Token
     """
@@ -51,7 +51,7 @@ def create_jwt(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 async def get_current_user(database: Session = Depends(get_db),
-                           token: str = Depends(oauth2_scheme)):
+                           token: str = Depends(oauth2_scheme)) -> user_objects.User:
     """
     Obtains details of currently logged in user
     """
@@ -73,7 +73,7 @@ async def get_current_user(database: Session = Depends(get_db),
 
 
 async def get_operator(
-        current_user: user_objects.User = Depends(get_current_user)):
+        current_user: user_objects.User = Depends(get_current_user)) -> user_objects.User:
     """
     Gets user account and returns it if an operator
     """
@@ -86,7 +86,7 @@ async def get_operator(
 """ API METHODS """
 @app.post("/users/create", response_model=user_objects.User, tags=[tags[0]])
 async def create_user(user_obj: user_objects.UserBase,
-                      database: Session = Depends(get_db)):
+                      database: Session = Depends(get_db)) -> user_objects.User:
     """
     Create user account
     """
@@ -95,21 +95,19 @@ async def create_user(user_obj: user_objects.UserBase,
     if db_username:
         raise HTTPException(
             status_code=400,
-            detail="Username {username} has already been registered.".format(
-                username=user_obj.username),
+            detail=f"Username {user_obj.username} has already been registered."
         )
     if db_email:
         raise HTTPException(
             status_code=400,
-            detail="Email {email} registered.".format(email=user_obj.email),
-        )
+            detail=f"Email {user_obj.email} registered.")
     new_user = user_methods.create_user(database, w3, user_obj)
     return new_user
 
 
 @app.get("/users/current", response_model=user_objects.User, tags=[tags[0]])
 async def current_user_info(
-        current_user: user_objects.User = Depends(get_current_user)):
+        current_user: user_objects.User = Depends(get_current_user)) -> user_objects.User:
     """
     View account details of currently logged in user
     """
@@ -118,7 +116,7 @@ async def current_user_info(
 
 @app.get("/users/items", tags=[tags[0]])
 async def view_items(
-        current_user: user_objects.User = Depends(get_current_user)):
+        current_user: user_objects.User = Depends(get_current_user)) -> List:
     """
     View owned items of currently logged in user
     """
@@ -136,7 +134,7 @@ async def transfer_item(
         passkey: str,
         current_user: user_objects.User = Depends(get_current_user),
         database: Session = Depends(get_db),
-):
+) -> str:
     """
     Transfer item token
     """
@@ -147,15 +145,14 @@ async def transfer_item(
     )
     if not transferred_item:
         raise HTTPException(status_code=400, detail="Transfer failed.")
-    return "Item {item} transferred to user {receiver}.".format(
-        item=item_id, receiver=receiver_id)
+    return f"Item {item_id} transferred to user {receiver_id}."
 
 
 # Display account details by value (username/public key/id/email)
 @app.get("/users/get/user={user_attr}",
          response_model=user_objects.User,
          tags=[tags[2]])
-def get_user(user_attr: str, database: Session = Depends(get_db)):
+def get_user(user_attr: str, database: Session = Depends(get_db)) -> user_objects.User:
     """
     Display account details by value
     Acccepted queries:
@@ -186,7 +183,7 @@ async def create_item(
         item_obj: item_objects.ItemCreate,
         passkey: str,
         current_operator: user_objects.User = Depends(get_operator)
-):
+) -> str:
     """
     Create item token
     """
@@ -199,21 +196,20 @@ async def create_item(
 
 
 @app.get("/items/verify/id={itemid}", tags=[tags[4]])
-async def verify_item(item_id: int, database: Session = Depends(get_db)):
+async def verify_item(item_id: int, database: Session = Depends(get_db)) -> str:
     """
     Verify item token
     """
-    item_obj = item_methods.get_item(database, item_id)
+    item_obj = item_methods.get_item(database, TXReqs(), item_id)
     if not item_obj:
         raise HTTPException(status_code=404,
                             detail="Item unknown/unauthenticated!")
-    return "Item {itemid} is authentic. Owned by User: {userid}.".format(
-        itemid=item_id, userid=item_obj.owner_id)
+    return f"Item {item_id} is authentic."
 
 
 @app.post("/token", response_model=Token, tags=[tags[3]])
 async def login_jwt_access(form_data: OAuth2PasswordRequestForm = Depends(),
-                           database: Session = Depends(get_db)):
+                           database: Session = Depends(get_db)) -> dict:
     """
     Create Json Web Token via+and user login
     """

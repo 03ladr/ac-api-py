@@ -1,7 +1,13 @@
+"""
+On-Chain Methods/Functions
+"""
 from ..cryptography.aes_methods import aes_decrypt
+from .onchain_objects import TXReqs
 
-
-def sendtx(function, TXReqs):
+def sendtx(function, TXReqs: TXReqs):
+    """
+    Send On-Chain Transaction
+    """
     # Loading senders account
     privatekey = aes_decrypt(TXReqs.privatekey, TXReqs.passkey)
     sender = TXReqs.w3.eth.account.privateKeyToAccount(privatekey.decode())

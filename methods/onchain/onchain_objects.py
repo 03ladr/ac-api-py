@@ -1,10 +1,13 @@
+"""
+On-Chain Objects
+"""
 # Typing
 from typing import Optional
 # On-Chain Connectivity/Tooling
 from .onchain_config import w3, contract
 
-
-class TXReqs: # TX send object
+# TX send object
+class TXReqs:
     def __init__(self,
                  privatekey: Optional[bytes] = None,
                  passkey: Optional[bytes] = None,

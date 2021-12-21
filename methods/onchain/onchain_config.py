@@ -1,3 +1,6 @@
+"""
+On-Chain Configuration
+"""
 # Config Variables
 from config import WEB3_URL, CONTRACT_ADDRESS
 # On-Chain Connectivity/Tooling

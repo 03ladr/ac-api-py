@@ -6,4 +6,3 @@ python_jose==3.3.0
 shortuuid==1.0.8
 SQLAlchemy==1.4.28
 treepoem==3.12.0
-web3==5.25.0

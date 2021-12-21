@@ -1,16 +1,22 @@
-"""Smart contract event log --> database population module"""
+"""
+Smart contract event log --> database population module
+"""
 # Database Item
 from ..db_schemas import Item
 
 
 class ItemFilters:
+    """
+    Smart contract event log filter -
+    Checks for mint, burn and transfer events
+    """
     def __init__(self, db, contract):
         self.db = db
         self.mintfilter = contract.events.Mint.createFilter(fromBlock="latest")
         self.burnfilter = contract.events.Burn.createFilter(fromBlock="latest")
         self.transferfilter = contract.events.Transfer.createFilter(fromBlock="latest")
 
-    def filter(self):
+    def filter(self) -> bool:
         mints = self.mintfilter.get_new_entries()
         burns = self.mintfilter.get_new_entries()
         transfers = self.transferfilter.get_new_entries()

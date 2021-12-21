@@ -1,3 +1,6 @@
+"""
+User Methods/Functions
+"""
 # Cryptography modules
 from ..cryptography import aes_methods, sha_methods
 # Utilities
@@ -14,8 +17,10 @@ from . import user_objects
 OPERATOR_ROLE = "0x97667070c54ef182b0f5858b034beac1b6f3089aa2d3188bb1e8929f4fa9b929"
 
 
-# User creation
-def create_user(db: Session, w3, user: user_objects.User):
+def create_user(db: Session, w3, user: user_objects.User) -> user_objects.User:
+    """
+    Create User Account
+    """
     account = w3.eth.account.create()
     pubkey, privkey_raw = bytes(account.address,
                                 'utf-8'), account.privateKey.hex()
@@ -40,8 +45,10 @@ def create_user(db: Session, w3, user: user_objects.User):
     return db_user
 
 
-# Verifying user by password
-def verify_user(db: Session, user_attr: str, passkey: str):
+def verify_user(db: Session, user_attr: str, passkey: str) -> user_objects.User:
+    """
+    Verify user by password
+    """
     db_user = get_user_by(db, user_attr)
     if not db_user:
         return False
@@ -51,8 +58,14 @@ def verify_user(db: Session, user_attr: str, passkey: str):
     return db_user
 
 
-# Gets user by either username, publickey, email or ID
-def get_user_by(db: Session, user_attr: str):
+def get_user_by(db: Session, user_attr: str) -> user_objects.User:
+    """
+    Get user by:
+        - username
+        - public key
+        - emails
+        - ID
+    """
     db_user = (db.query(db_schemas.User).filter(
         or_(
             db_schemas.User.username == user_attr,
@@ -64,8 +77,10 @@ def get_user_by(db: Session, user_attr: str):
     return db_user
 
 
-# Get public key of user
-def get_user_publickey(db: Session, user_attr: str):
+def get_user_publickey(db: Session, user_attr: str) -> bytes:
+    """
+    Get public key of user
+    """
     publickey = (db.query(db_schemas.User).filter(
         or_(
             db_schemas.User.username == user_attr,
@@ -76,14 +91,18 @@ def get_user_publickey(db: Session, user_attr: str):
     return publickey
 
 
-# Get all users
-def get_users(db: Session, skip: int = 0, limit: int = 100):
+def get_users(db: Session, skip: int = 0, limit: int = 100) -> user_objects.User:
+    """
+    Get all users
+    """
     return db.query(db_schemas.User).offset(skip).limit(limit).all()
 
 
-### Operator Methods ###
-# Set user as operator
-def set_operator(db: Session, contract, user_attr: str, brand: str):
+"""OPERATOR METHODS"""
+def set_operator(db: Session, contract, user_attr: str, brand: str) -> user_objects.User:
+    """
+    Set user as operator
+    """
     db_user = get_user_by(db, user_attr)
     contract.functions.grantRole(OPERATOR_ROLE,
                                  db_user.publickey.decode()).transact(
@@ -97,10 +116,12 @@ def set_operator(db: Session, contract, user_attr: str, brand: str):
     return db_user
 
 
-# Verify that user is operator. Returns user object if true, false if not.
-def is_operator(contract, user: user_objects.User):
+def is_operator(contract, user: user_objects.User) -> bool:
+    """
+    Verify that user is an operator. Returns True/False
+    """
     status = contract.functions.hasRole(OPERATOR_ROLE, user.publickey.decode())
     if user.type == db_schemas.AccountType.operator and status:
-        return user
+        return True
     else:
         return False
