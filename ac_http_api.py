@@ -210,6 +210,9 @@ async def verify_item(item_id: int, database: Session = Depends(get_db)) -> str:
 @app.get("/items/info/claimability")
 async def view_item_claimability(item_id: int,
                                 current_user: user_objects.User = Depends(get_current_user)) -> str:
+    """
+    Query claimability status of item token
+    """
     item_claimability = item_methods.get_item_claimability(TXReqs(), itemid)
     return f"Item claimability status: {item_claimability}"
 
@@ -217,6 +220,9 @@ async def view_item_claimability(item_id: int,
 @app.get("/items/info/claimability")
 async def toggle_item_claimability(item_id: int, passkey: str,
                                 current_user: user_objects.User = Depends(get_current_user)) -> str:
+    """
+    Toggle claimability status of item token
+    """
     item_claimability = item_methods.set_item_claimability(TXReqs(privatekey=current_user.privatekey, passkey=passkey), itemid)
     return f"Item claimability status: {item_claimability}"
 
@@ -224,6 +230,9 @@ async def toggle_item_claimability(item_id: int, passkey: str,
 @app.get("/items/info/transfercount")
 async def view_item_transfercount(item_id: int, db: Session = Depends(get_db),
                                 current_user: user_objects.User = Depends(get_current_user)) -> str:
+    """
+    Query amount of transfers of item token
+    """
     item_claimability = item_methods.get_item_transfercount(db, itemid)
     return f"Item transfer ciunt: {item_claimability}"
 
