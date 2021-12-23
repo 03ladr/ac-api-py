@@ -97,24 +97,6 @@ def get_users(db: Session, skip: int = 0, limit: int = 100) -> user_objects.User
     return db.query(db_schemas.User).offset(skip).limit(limit).all()
 
 
-"""OPERATOR METHODS"""
-def set_operator(db: Session, contract, user_attr: str, brand: str) -> user_objects.User:
-    """
-    Set user as operator
-    """
-    db_user = get_user_by(db, user_attr)
-    contract.functions.grantRole(OPERATOR_ROLE,
-                                 db_user.publickey.decode()).transact(
-                                     {"from": CONTRACT_CREATOR})
-    db.query(db_schemas.User).filter(db_schemas.User.id == db_user.id).update({
-        "type": "operator", "brand": brand}
-    )
-    db.commit()
-    db.refresh(db_user)
-    # Returning user object
-    return db_user
-
-
 def is_operator(contract, user: user_objects.User) -> bool:
     """
     Verify that user is an operator. Returns True/False
