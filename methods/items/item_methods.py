@@ -7,13 +7,14 @@ from urllib.request import urlopen
 # Typing
 from typing import List
 # Database tooling
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 # Local modules
 from . import item_objects
 from ..database import db_schemas
 from ..users.user_methods import get_user_publickey
 from ..onchain.onchain_methods import sendtx
 from ..onchain.onchain_objects import TXReqs
+
 
 def create_item(ipfs, item_obj: item_objects.ItemCreate, TXReqs) -> bool:
     """
@@ -61,7 +62,7 @@ def get_item(db: Session, TXReqs: TXReqs, itemid: int):
     """
     # Verifies items existence in-db
     itemid = db.query(
-        db_schemas.Item).filter(db_schemas.Item.id == itemid).first().id
+        db_schemas.Item).filter(db_schemas.Item.id == itemid).options(load_only('id')).one()
     # Returns JSON Metadata Object
     return get_metadata(TXReqs, itemid)
 
@@ -103,9 +104,16 @@ def get_item_claimability(TXReqs, itemid: int) -> bool:
     return item_claimability
 
 
+def claim_item(TXReqs, itemid: int) -> None:
+    """
+    Claim Item Token
+    """
+    sendtx(TXReqs.contract.functions.claimItemToken(itemid), TXReqs)
+
+
 def get_item_transfercount(db, itemid: int) -> int:
     """
     Get transfer count of item
     """
-    transfercount = db.query(db_schemas.Item).filter(db_schemas.Item.id == itemid).one()
+    transfercount = db.query(db_schemas.Item).filter(db_schemas.Item.id == itemid).options(load_only('id')).one()
     return transfercount

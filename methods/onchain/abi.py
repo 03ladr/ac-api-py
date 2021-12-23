@@ -75,6 +75,31 @@ abi = [
           "internalType": "uint256",
           "name": "itemid",
           "type": "uint256"
+        },
+        {
+          "indexed": False,
+          "internalType": "address",
+          "name": "oldOwner",
+          "type": "address"
+        },
+        {
+          "indexed": False,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "ItemTransfer",
+      "type": "event"
+    },
+    {
+      "anonymous": False,
+      "inputs": [
+        {
+          "indexed": False,
+          "internalType": "uint256",
+          "name": "itemid",
+          "type": "uint256"
         }
       ],
       "name": "Mint",
@@ -153,31 +178,6 @@ abi = [
         }
       ],
       "name": "RoleRevoked",
-      "type": "event"
-    },
-    {
-      "anonymous": False,
-      "inputs": [
-        {
-          "indexed": False,
-          "internalType": "uint256",
-          "name": "itemid",
-          "type": "uint256"
-        },
-        {
-          "indexed": False,
-          "internalType": "address",
-          "name": "oldOwner",
-          "type": "address"
-        },
-        {
-          "indexed": False,
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
-        }
-      ],
-      "name": "Transfer",
       "type": "event"
     },
     {
@@ -327,6 +327,19 @@ abi = [
           "type": "uint256"
         }
       ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "itemid",
+          "type": "uint256"
+        }
+      ],
+      "name": "claimItemToken",
+      "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -746,4 +759,3 @@ abi = [
       "type": "function"
     }
   ]
-

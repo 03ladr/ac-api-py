@@ -7,7 +7,7 @@ from ..cryptography import aes_methods, sha_methods
 from config import CONTRACT_CREATOR
 # Database Connectivity/Tooling
 from shortuuid import ShortUUID
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, load_only
 from sqlalchemy import or_
 from ..database import db_schemas
 # User Modules
@@ -84,9 +84,8 @@ def get_user_publickey(db: Session, user_attr: str) -> bytes:
     publickey = (db.query(db_schemas.User).filter(
         or_(
             db_schemas.User.username == user_attr,
-            db_schemas.User.publickey == bytes(user_attr, 'utf-8'),
             db_schemas.User.email == user_attr,
-            db_schemas.User.id == user_attr,
+            db_schemas.User.id == user_attr
         )).options(load_only('publickey')).one())
     return publickey
 

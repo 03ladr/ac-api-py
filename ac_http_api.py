@@ -80,7 +80,7 @@ async def get_operator(
     operator = user_methods.is_operator(contract, current_user)
     if not operator:
         raise HTTPException(status_code=403, detail="Not an operator account.")
-    return operator
+    return current_user
 
 
 """ API METHODS """
@@ -148,10 +148,9 @@ async def transfer_item(
     return f"Item {item_id} transferred to user {receiver_id}."
 
 
-# Display account details by value (username/public key/id/email)
 @app.get("/users/get/user={user_attr}",
          response_model=user_objects.User,
-         tags=[tags[2]])
+         tags=[tags[0]])
 def get_user(user_attr: str, database: Session = Depends(get_db)) -> user_objects.User:
     """
     Display account details by value
@@ -167,7 +166,7 @@ def get_user(user_attr: str, database: Session = Depends(get_db)) -> user_object
     return db_user
 
 
-@app.get("/items/info/item={itemid}", tags=[tags[2]])
+@app.get("/items/info/item={itemid}", tags=[tags[1]])
 def get_item(item_id: int, database: Session = Depends(get_db)):
     """
     Display item token details by ID
@@ -195,7 +194,7 @@ async def create_item(
     return "Item created."
 
 
-@app.get("/items/verify/id={itemid}", tags=[tags[4]])
+@app.get("/items/verify/id={itemid}", tags=[tags[1]])
 async def verify_item(item_id: int, database: Session = Depends(get_db)) -> str:
     """
     Verify item token
@@ -207,28 +206,48 @@ async def verify_item(item_id: int, database: Session = Depends(get_db)) -> str:
     return f"Item {item_id} is authentic."
 
 
-@app.get("/items/info/claimability")
+@app.get("/items/claim", tags=[tags[1]])
+async def claim_item(item_id: int,
+                    passkey: str,
+                    current_user: user_objects.User = Depends(get_current_user)) -> str:
+    """
+    Claim item token
+    """
+    item_methods.claim_item(TXReqs(privatekey=current_operator.accesskey, passkey=passkey))
+    return f"Item {item_id} has been claimed"
+
+
+@app.get("/items/info/claimability", tags=[tags[1]])
 async def view_item_claimability(item_id: int,
                                 current_user: user_objects.User = Depends(get_current_user)) -> str:
+    """
+    View item claimability
+    """
     item_claimability = item_methods.get_item_claimability(TXReqs(), itemid)
     return f"Item claimability status: {item_claimability}"
 
 
-@app.get("/items/info/claimability")
+@app.get("/items/info/claimability", tags=[tags[1]])
 async def toggle_item_claimability(item_id: int, passkey: str,
                                 current_user: user_objects.User = Depends(get_current_user)) -> str:
+    """
+    Toggle item claimability
+    """
     item_claimability = item_methods.set_item_claimability(TXReqs(privatekey=current_user.privatekey, passkey=passkey), itemid)
     return f"Item claimability status: {item_claimability}"
 
 
-@app.get("/items/info/transfercount")
-async def view_item_transfercount(item_id: int, db: Session = Depends(get_db),
+@app.get("/items/info/transfercount", tags=[tags[1]])
+async def get_item_transfer_count(item_id: int, db: Session = Depends(get_db),
                                 current_user: user_objects.User = Depends(get_current_user)) -> str:
+    """
+    Get item transfer count
+    """
     item_claimability = item_methods.get_item_transfercount(db, itemid)
     return f"Item transfer ciunt: {item_claimability}"
 
 
-@app.post("/token", response_model=Token, tags=[tags[3]])
+@app.post("/token", response_model=Token, tags=[tags[2]])
 async def login_jwt_access(form_data: OAuth2PasswordRequestForm = Depends(),
                            database: Session = Depends(get_db)) -> dict:
     """
