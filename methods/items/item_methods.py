@@ -25,9 +25,9 @@ def create_item(ipfs, item_obj: item_objects.ItemCreate, TXReqs) -> bool:
     # Mints Item NFT via smart contract
     minted = sendtx(TXReqs.contract.functions.mintItemToken(metadataURI),
                     TXReqs)
-    # Returns False if Item creation failed
+    # Returns None if Item creation failed
     if not minted:
-        return False
+        return None
     # Returns True indicating successful creation
     return True
 
@@ -41,30 +41,33 @@ def create_metadata(ipfs, item_obj: item_objects.ItemCreate) -> str:
     return "http://127.0.0.1:8080/ipfs/{cid}".format(cid=ipfs_metadata)
 
 
-def transfer_item(TXReqs: TXReqs, itemid: int, receiver: str) -> bool:
+def transfer_item(db: Session, TXReqs: TXReqs, itemid: int, receiver: str) -> bool:
     """
     Transfer Item Token
     """
     # Transfers item NFT via smart contract
     transferred = sendtx(
         TXReqs.contract.functions.transferItemToken(
-            itemid, get_user_publickey(receiver)), TXReqs)
-    # Returns False if Item transfer failed
+            itemid, get_user_publickey(db, receiver).decode()), TXReqs)
+    # Returns None if Item transfer failed
     if not transferred:
-        return False
+        return None
     # Returns True indicating successful transfer
     return True
 
 
-def get_item(db: Session, TXReqs: TXReqs, itemid: int):
+def get_item(db: Session, TXReqs: TXReqs, item_id: int):
     """
     Get Item Token (metadata) after validating existence in-database
     """
     # Verifies items existence in-db
-    itemid = db.query(
-        db_schemas.Item).filter(db_schemas.Item.id == itemid).options(load_only('id')).one()
+    item_id = db.query(
+        db_schemas.Item).filter(db_schemas.Item.id == item_id).options(load_only('id')).first()
+    if not item_id:
+        return None
+
     # Returns JSON Metadata Object
-    return get_metadata(TXReqs, itemid)
+    return get_metadata(TXReqs, item_id.id)
 
 
 def get_metadata(TXReqs: TXReqs, itemid: int):
@@ -104,16 +107,25 @@ def get_item_claimability(TXReqs, itemid: int) -> bool:
     return item_claimability
 
 
-def claim_item(TXReqs, itemid: int) -> None:
+def claim_item(TXReqs, itemid: int) -> bool:
     """
     Claim Item Token
     """
     sendtx(TXReqs.contract.functions.claimItemToken(itemid), TXReqs)
+    return True
 
 
 def get_item_transfercount(db, itemid: int) -> int:
     """
     Get transfer count of item
     """
-    transfercount = db.query(db_schemas.Item).filter(db_schemas.Item.id == itemid).options(load_only('id')).one()
-    return transfercount
+    transfercount = db.query(db_schemas.Item).filter(db_schemas.Item.id == itemid).options(load_only('id')).first()
+    return transfercount.id
+
+
+def burn_item_token(TXReqs, itemid: int) -> bool:
+    """
+    Burn Item Token
+    """
+    sendtx(TXReqs.contract.functions.burnItemToken(itemid), TXReqs)
+    return True

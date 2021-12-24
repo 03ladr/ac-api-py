@@ -29,9 +29,9 @@ from datetime import datetime, timedelta
 
 """"DB INIT """
 load_db()
-""" WEB3 FILTER -> database POPULATION """
+""" WEB3 FILTER -> DATABASE POPULATION """
 create_task(populate_db())
-"""## FASTAPI INIT """
+""" FASTAPI INIT """
 app = FastAPI()
 
 
@@ -114,7 +114,7 @@ async def current_user_info(
     return current_user
 
 
-@app.get("/users/items", tags=[tags[0]])
+@app.get("/users/items/view", tags=[tags[0]])
 async def view_items(
         current_user: user_objects.User = Depends(get_current_user)) -> List:
     """
@@ -127,31 +127,30 @@ async def view_items(
     return owned_items
 
 
-@app.post("/items/transfer", tags=[tags[0]])
+@app.post("users/items/transfer", tags=[tags[0]])
 async def transfer_item(
         item_id: int,
-        receiver_id: user_objects.UserID,
+        receiver_attr: str,
         passkey: str,
         current_user: user_objects.User = Depends(get_current_user),
-        database: Session = Depends(get_db),
+        database: Session = Depends(get_db)
 ) -> str:
     """
     Transfer item token
     """
-    transferred_item = item_methods.transfer_item(
-        item_id,
-        user_methods.get_user_publickey(database, receiver_id),
-        TXReqs(privatekey=current_user.accesskey, passkey=passkey),
-    )
+    transferred_item = item_methods.transfer_item(database,
+                                                    TXReqs(
+                                                    privatekey=current_user.accesskey,
+                                                    passkey=passkey), item_id, receiver_attr)
     if not transferred_item:
         raise HTTPException(status_code=400, detail="Transfer failed.")
-    return f"Item {item_id} transferred to user {receiver_id}."
+    return f"Item {item_id} transferred to user {receiver_attr}."
 
 
 @app.get("/users/get/user={user_attr}",
          response_model=user_objects.User,
          tags=[tags[0]])
-def get_user(user_attr: str, database: Session = Depends(get_db)) -> user_objects.User:
+def get_user(user_attr: str, database: Session = Depends(get_db), current_user: user_objects.User = Depends(get_operator)) -> user_objects.User:
     """
     Display account details by value
     Acccepted queries:
@@ -164,17 +163,6 @@ def get_user(user_attr: str, database: Session = Depends(get_db)) -> user_object
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
-
-
-@app.get("/items/info/item={itemid}", tags=[tags[1]])
-def get_item(item_id: int, database: Session = Depends(get_db)):
-    """
-    Display item token details by ID
-    """
-    item_obj = item_methods.get_item(database, TXReqs(), item_id)
-    if item_obj is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return item_obj
 
 
 @app.post("/items/create", tags=[tags[1]])
@@ -194,7 +182,48 @@ async def create_item(
     return "Item created."
 
 
-@app.get("/items/verify/id={itemid}", tags=[tags[1]])
+@app.post("/items/claim", tags=[tags[1]])
+async def claim_item(item_id: int,
+                    passkey: str,
+                    current_user: user_objects.User = Depends(get_current_user)) -> str:
+    """
+    Claim Item Token
+    """
+    item_methods.claim_item(TXReqs(privatekey=current_user.accesskey, passkey=passkey), item_id)
+    return f"Item {item_id} has been claimed"
+
+
+@app.post("/items/claimability/set", tags=[tags[1]])
+async def toggle_item_claimability(item_id: int, passkey: str,
+                                current_user: user_objects.User = Depends(get_current_user)) -> str:
+    """
+    Toggle item claimability
+    """
+    item_claimability = item_methods.set_item_claimability(TXReqs(privatekey=current_user.accesskey, passkey=passkey), item_id)
+    return f"Item claimability status: {item_claimability}"
+
+
+@app.post("/items/forfeit", tags=[tags[1]])
+async def forfeit_item(item_id: int, passkey: str, current_user: user_objects.User = Depends(get_current_user)) -> str:
+    """
+    Forfeit/burn Item Token
+    """
+    item_methods.burn_item_token(item_id, TXReqs(privatekey=current_user.accesskey, passkey=passkey))
+    return "Item {item_id} forfeited."
+
+
+@app.get("/items/get/item={item_id}", tags=[tags[1]])
+def get_item(item_id: int, database: Session = Depends(get_db), current_user: user_objects.User = Depends(get_operator)):
+    """
+    Display item token details by ID
+    """
+    item_obj = item_methods.get_item(database, TXReqs(), item_id)
+    if item_obj is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item_obj
+
+
+@app.get("/items/verify/id={item_id}", tags=[tags[1]])
 async def verify_item(item_id: int, database: Session = Depends(get_db)) -> str:
     """
     Verify item token
@@ -203,48 +232,28 @@ async def verify_item(item_id: int, database: Session = Depends(get_db)) -> str:
     if not item_obj:
         raise HTTPException(status_code=404,
                             detail="Item unknown/unauthenticated!")
-    return f"Item {item_id} is authentic."
+    item_obj['AUTHENTIC'] = True
+    return item_obj
 
 
-@app.get("/items/claim", tags=[tags[1]])
-async def claim_item(item_id: int,
-                    passkey: str,
-                    current_user: user_objects.User = Depends(get_current_user)) -> str:
-    """
-    Claim item token
-    """
-    item_methods.claim_item(TXReqs(privatekey=current_operator.accesskey, passkey=passkey))
-    return f"Item {item_id} has been claimed"
-
-
-@app.get("/items/info/claimability", tags=[tags[1]])
-async def view_item_claimability(item_id: int,
-                                current_user: user_objects.User = Depends(get_current_user)) -> str:
-    """
-    View item claimability
-    """
-    item_claimability = item_methods.get_item_claimability(TXReqs(), itemid)
-    return f"Item claimability status: {item_claimability}"
-
-
-@app.get("/items/info/claimability", tags=[tags[1]])
-async def toggle_item_claimability(item_id: int, passkey: str,
-                                current_user: user_objects.User = Depends(get_current_user)) -> str:
-    """
-    Toggle item claimability
-    """
-    item_claimability = item_methods.set_item_claimability(TXReqs(privatekey=current_user.privatekey, passkey=passkey), itemid)
-    return f"Item claimability status: {item_claimability}"
-
-
-@app.get("/items/info/transfercount", tags=[tags[1]])
+@app.get("/items/transfercount/view", tags=[tags[1]])
 async def get_item_transfer_count(item_id: int, db: Session = Depends(get_db),
                                 current_user: user_objects.User = Depends(get_current_user)) -> str:
     """
     Get item transfer count
     """
-    item_claimability = item_methods.get_item_transfercount(db, itemid)
-    return f"Item transfer ciunt: {item_claimability}"
+    item_claimability = item_methods.get_item_transfercount(db, item_id)
+    return f"Item transfer count: {item_claimability}"
+
+
+@app.get("/items/claimability/view", tags=[tags[1]])
+async def view_item_claimability(item_id: int,
+                                current_user: user_objects.User = Depends(get_current_user)) -> str:
+    """
+    View item claimability
+    """
+    item_claimability = item_methods.get_item_claimability(TXReqs(), item_id)
+    return f"Item claimability status: {item_claimability}"
 
 
 @app.post("/token", response_model=Token, tags=[tags[2]])

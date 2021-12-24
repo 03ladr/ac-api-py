@@ -1,8 +1,9 @@
 """
 Smart contract event log --> database population module
 """
-# Database Item
+# Database Dependencies
 from ..db_schemas import Item
+from sqlalchemy.orm import load_only
 
 
 class ItemFilters:
@@ -40,9 +41,12 @@ class ItemFilters:
                 itemid = transfer['args']['itemid']
                 transfercount = self.db.query(Item).filter(
                     Item.id == itemid).options(
-                        load_only('id')).one()
+                        load_only('transfers')).first()
+                if not transfercount.transfers:
+                    transfercount.transfers = 0
                 self.db.query(Item).filter(
                     Item.id == itemid).update(
-                        {'transfers': transfercount + 1})
+                        {'transfers': transfercount.transfers + 1})
+                self.db.commit()
 
         return True

@@ -23,6 +23,7 @@ class ItemCreate(BaseModel):
 # Item Object
 class Item(ItemCreate):
     id: int
+    transfers: int
 
     class Config:
         orm_mode = True

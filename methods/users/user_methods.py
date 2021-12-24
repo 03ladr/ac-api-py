@@ -26,7 +26,7 @@ def create_user(db: Session, w3, user: user_objects.User) -> user_objects.User:
                                 'utf-8'), account.privateKey.hex()
     # Encrypting private key
     # USERS MUST STORE KEY WHERE IT WILL NOT BE LOST
-    accesskey = aes_methods.aes_encrypt(privkey_raw)
+    accesskey = aes_methods.aes_encrypt(privkey_raw, user.passkey)
     # Hashing user password
     passkey = sha_methods.create_hash(user.passkey)
     # Committing to database
@@ -72,7 +72,7 @@ def get_user_by(db: Session, user_attr: str) -> user_objects.User:
             db_schemas.User.publickey == bytes(user_attr, 'utf-8'),
             db_schemas.User.email == user_attr,
             db_schemas.User.id == user_attr,
-        )).one())
+        )).first())
     # Returning user object
     return db_user
 
@@ -86,8 +86,8 @@ def get_user_publickey(db: Session, user_attr: str) -> bytes:
             db_schemas.User.username == user_attr,
             db_schemas.User.email == user_attr,
             db_schemas.User.id == user_attr
-        )).options(load_only('publickey')).one())
-    return publickey
+        )).options(load_only('publickey')).first())
+    return publickey.publickey
 
 
 def get_users(db: Session, skip: int = 0, limit: int = 100) -> user_objects.User:
