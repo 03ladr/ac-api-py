@@ -1,3 +1,5 @@
+curses_menu==0.5.0
+cursesmenu==0.0.1a0
 ipfshttpclient==0.7.0
 jose==1.0.0
 pycryptodome==3.12.0
@@ -6,3 +8,4 @@ python_jose==3.3.0
 shortuuid==1.0.8
 SQLAlchemy==1.4.28
 treepoem==3.12.0
+web3==5.25.0
