@@ -1,22 +1,26 @@
 """
 Database schemas
 """
+# Utilities
+import enum
 # Database Connectivity/Tooling
 from sqlalchemy import Enum, Column, Integer, String
 from sqlalchemy.types import LargeBinary
 from .database import Base
-# Utilities
-import enum
 
 
-# Account types
 class AccountType(enum.Enum):
+    """
+    Account Type Enum Object
+    """
     user = "user"
     operator = "operator"
 
 
-# User Table
 class User(Base):
+    """
+    User Database  Table
+    """
     __tablename__ = "users"
 
     id = Column(String, primary_key=True, index=True)
@@ -31,6 +35,9 @@ class User(Base):
 
 # Item Table
 class Item(Base):
+    """
+    Item Database Table
+    """
     __tablename__ = "items"
 
     id = Column(Integer, primary_key=True, index=True)

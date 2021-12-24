@@ -1,9 +1,11 @@
+"""
+Admin Method API
+"""
 # Cryptography modules
-from methods.cryptography import sha_methods
 from methods.database.database import SessionLocal
 from methods.database import db_schemas
 # On-Chain Connectivity/Tooling
-from methods.onchain.onchain_config import w3, contract
+from methods.onchain.onchain_config import contract
 from config import CONTRACT_CREATOR
 # User Methods
 from methods.users import user_methods
@@ -13,14 +15,20 @@ from cursesmenu.items import *
 
 Session = SessionLocal()
 
-def ui():
+def user_interface():
+    """
+    Curses interface
+    """
     menu = CursesMenu("Authentichain Administrative Control", "Main Menu")
     f1 = FunctionItem("Set user as Operator", set_operator)
     menu.append_item(f1)
     menu.show()
 
 
-def set_operator() -> None:
+def set_operator():
+    """
+    Set user as operator by attribute
+    """
     user_attr = input("(Select User)> ")
     operator_brand = input("(Select Brand)> ")
     db_user = user_methods.get_user_by(Session, user_attr)
@@ -31,7 +39,6 @@ def set_operator() -> None:
         "type": "operator", "brand": operator_brand}
     )
     Session.commit()
-    return None
 
 
-ui()
+user_interface()

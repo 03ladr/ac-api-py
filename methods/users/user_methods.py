@@ -3,8 +3,6 @@ User Methods/Functions
 """
 # Cryptography modules
 from ..cryptography import aes_methods, sha_methods
-# Utilities
-from config import CONTRACT_CREATOR
 # Database Connectivity/Tooling
 from shortuuid import ShortUUID
 from sqlalchemy.orm import Session, load_only
@@ -13,11 +11,10 @@ from ..database import db_schemas
 # User Modules
 from . import user_objects
 
-
 OPERATOR_ROLE = "0x97667070c54ef182b0f5858b034beac1b6f3089aa2d3188bb1e8929f4fa9b929"
 
 
-def create_user(db: Session, w3, user: user_objects.User) -> user_objects.User:
+def create_user(database: Session, w3, user: user_objects.User) -> user_objects.User:
     """
     Create User Account
     """
@@ -38,18 +35,19 @@ def create_user(db: Session, w3, user: user_objects.User) -> user_objects.User:
         accesskey=accesskey,
         passkey=passkey,
     )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    database.add(db_user)
+    database.commit()
+    database.refresh(db_user)
     # Returning user object
     return db_user
 
 
-def verify_user(db: Session, user_attr: str, passkey: str) -> user_objects.User:
+def verify_user(database: Session, user_attr: str,
+                passkey: str) -> user_objects.User:
     """
     Verify user by password
     """
-    db_user = get_user_by(db, user_attr)
+    db_user = get_user_by(database, user_attr)
     if not db_user:
         return False
     if not sha_methods.verify_hash(passkey, db_user.passkey):
@@ -58,7 +56,7 @@ def verify_user(db: Session, user_attr: str, passkey: str) -> user_objects.User:
     return db_user
 
 
-def get_user_by(db: Session, user_attr: str) -> user_objects.User:
+def get_user_by(database: Session, user_attr: str) -> user_objects.User:
     """
     Get user by:
         - username
@@ -66,7 +64,7 @@ def get_user_by(db: Session, user_attr: str) -> user_objects.User:
         - emails
         - ID
     """
-    db_user = (db.query(db_schemas.User).filter(
+    db_user = (database.query(db_schemas.User).filter(
         or_(
             db_schemas.User.username == user_attr,
             db_schemas.User.publickey == bytes(user_attr, 'utf-8'),
@@ -77,24 +75,25 @@ def get_user_by(db: Session, user_attr: str) -> user_objects.User:
     return db_user
 
 
-def get_user_publickey(db: Session, user_attr: str) -> bytes:
+def get_user_publickey(database: Session, user_attr: str) -> bytes:
     """
     Get public key of user
     """
-    publickey = (db.query(db_schemas.User).filter(
-        or_(
-            db_schemas.User.username == user_attr,
+    publickey = (database.query(db_schemas.User).filter(
+        or_(db_schemas.User.username == user_attr,
             db_schemas.User.email == user_attr,
-            db_schemas.User.id == user_attr
-        )).options(load_only('publickey')).first())
+            db_schemas.User.id == user_attr)).options(
+                load_only('publickey')).first())
     return publickey.publickey
 
 
-def get_users(db: Session, skip: int = 0, limit: int = 100) -> user_objects.User:
+def get_users(database: Session,
+              skip: int = 0,
+              limit: int = 100) -> user_objects.User:
     """
     Get all users
     """
-    return db.query(db_schemas.User).offset(skip).limit(limit).all()
+    return database.query(db_schemas.User).offset(skip).limit(limit).all()
 
 
 def is_operator(contract, user: user_objects.User) -> bool:

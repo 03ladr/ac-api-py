@@ -1,17 +1,23 @@
 """
-Item Token
+Item Objects
 """
 # Typing
 from typing import Optional, List
 from pydantic import BaseModel
 
-# Item Attribute
+
 class ItemAttribute(BaseModel):
+    """
+    Item Attribute Object
+    """
     trait_type: Optional[str] = None
     value: Optional[str] = None
 
-# Item Creation Object
+
 class ItemCreate(BaseModel):
+    """
+    Item Creation Object
+    """
     name: str
     description: str
     image: str
@@ -20,8 +26,11 @@ class ItemCreate(BaseModel):
     lister: str
     attributes: List[ItemAttribute]
 
-# Item Object
+
 class Item(ItemCreate):
+    """
+    Item Database Object
+    """
     id: int
     transfers: int
 

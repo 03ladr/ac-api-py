@@ -6,13 +6,14 @@ from typing import Optional
 # On-Chain Connectivity/Tooling
 from .onchain_config import w3, contract
 
-# TX send object
+
 class TXReqs:
+    """
+    TX Sending Object
+    """
     def __init__(self,
                  privatekey: Optional[bytes] = None,
-                 passkey: Optional[bytes] = None,
-                 w3=w3,
-                 contract=contract):
+                 passkey: Optional[bytes] = None):
         self.privatekey: bytes = privatekey
         self.passkey: str = passkey
         self.w3 = w3

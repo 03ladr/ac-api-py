@@ -15,38 +15,40 @@ class ItemFilters:
         self.db = db
         self.mintfilter = contract.events.Mint.createFilter(fromBlock="latest")
         self.burnfilter = contract.events.Burn.createFilter(fromBlock="latest")
-        self.transferfilter = contract.events.ItemTransfer.createFilter(fromBlock="latest")
+        self.transferfilter = contract.events.ItemTransfer.createFilter(
+            fromBlock="latest")
 
     def filter(self) -> bool:
+        """
+        Filter function
+        """
         mints = self.mintfilter.get_new_entries()
         burns = self.mintfilter.get_new_entries()
         transfers = self.transferfilter.get_new_entries()
 
         if mints:
             for mint in mints:
-                itemid = mint['args']['itemid']
-                db_item = Item(id=itemid)
+                item_id = mint['args']['itemid']
+                db_item = Item(id=item_id)
                 self.db.add(db_item)
                 self.db.commit()
 
         if burns:
             for burn in burns:
-                itemid = mint['args']['itemid']
-                db_item = Item(id=itemid)
+                item_id = burn['args']['itemid']
+                db_item = Item(id=item_id)
                 self.db.delete(db_item)
                 self.db.commit()
 
         if transfers:
             for transfer in transfers:
-                itemid = transfer['args']['itemid']
+                item_id = transfer['args']['itemid']
                 transfercount = self.db.query(Item).filter(
-                    Item.id == itemid).options(
-                        load_only('transfers')).first()
+                    Item.id == item_id).options(load_only('transfers')).first()
                 if not transfercount.transfers:
                     transfercount.transfers = 0
-                self.db.query(Item).filter(
-                    Item.id == itemid).update(
-                        {'transfers': transfercount.transfers + 1})
+                self.db.query(Item).filter(Item.id == item_id).update(
+                    {'transfers': transfercount.transfers + 1})
                 self.db.commit()
 
         return True

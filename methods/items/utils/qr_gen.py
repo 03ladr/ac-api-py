@@ -1,7 +1,6 @@
 """
 QR-Code Generation
 """
-# https://pypi.org/project/treepoem/
 from treepoem import generate_barcode
 
 
