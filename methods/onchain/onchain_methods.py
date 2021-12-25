@@ -3,7 +3,8 @@ On-Chain Methods/Functions
 """
 from ..cryptography.aes_methods import aes_decrypt
 from .onchain_objects import TXReqs
-
+from ..exceptions.exception_objects import PrivateKeyError
+from eth_utils.exceptions import ValidationError
 
 def sendtx(function, tx_reqs: TXReqs):
     """
@@ -11,7 +12,10 @@ def sendtx(function, tx_reqs: TXReqs):
     """
     # Loading senders account
     privatekey = aes_decrypt(tx_reqs.privatekey, tx_reqs.passkey)
-    sender = tx_reqs.w3.eth.account.privateKeyToAccount(privatekey.decode())
+    try:
+        sender = tx_reqs.w3.eth.account.privateKeyToAccount(privatekey.decode())
+    except (ValidationError, ValueError):
+        raise PrivateKeyError
 
     # Building tx
     txdeps = {

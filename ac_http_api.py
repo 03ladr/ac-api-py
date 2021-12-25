@@ -16,8 +16,9 @@ from methods.onchain.onchain_config import w3, contract
 from methods.onchain.onchain_objects import TXReqs
 # FastAPI Dependencies/Tooling
 from jose import JWTError, jwt
-from fastapi import HTTPException, Depends, FastAPI, status
+from fastapi import HTTPException, Depends, FastAPI, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 from methods.fastapi.fastapi_config import oauth2_scheme
 from methods.fastapi.fastapi_objects import Token, tags
 # Item and User Modules
@@ -25,12 +26,19 @@ from methods.items import item_methods, item_objects
 from methods.users import user_methods, user_objects
 # Utilities
 from datetime import datetime, timedelta
+# Exception Objects
+from methods.exceptions.exception_objects import *
+
+
 """"DB INIT """
 load_db()
 """ WEB3 FILTER -> DATABASE POPULATION """
 create_task(populate_db())
 """ FASTAPI INIT """
 app = FastAPI()
+""" API FUNCTIONS """
+
+
 """ API FUNCTIONS """
 
 
@@ -77,9 +85,53 @@ async def get_operator(current_user: user_objects.User = Depends(
     Gets user account and returns it if an operator
     """
     operator = user_methods.is_operator(contract, current_user)
+
     if not operator:
         raise HTTPException(status_code=403, detail="Not an operator account.")
     return current_user
+
+
+""" ERROR HANDLING """
+
+
+@app.exception_handler(PrivateKeyError)
+async def exception_handler(request: Request, exc: PrivateKeyError):
+    return JSONResponse(
+        status_code=418,
+        content={"message": f"{exc.message}"},
+    )
+
+
+@app.exception_handler(OwnershipError)
+async def exception_handler(request: Request, exc: OwnershipError):
+    return JSONResponse(
+        status_code=418,
+        content={"message": f"{exc.message}"},
+    )
+
+
+@app.exception_handler(NonExistentTokenError)
+async def exception_handler(request: Request, exc: NonExistentTokenError):
+    return JSONResponse(
+        status_code=418,
+        content={"message": f"{exc.message}"},
+    )
+
+
+@app.exception_handler(NotOperatorError)
+async def exception_handler(request: Request, exc: NotOperatorError):
+    return JSONResponse(
+        status_code=418,
+        content={"message": f"{exc.message}"},
+    )
+
+
+@app.exception_handler(NotClaimableError)
+async def exception_handler(request: Request, exc: NotClaimableError):
+    return JSONResponse(
+        status_code=418,
+        content={"message": f"{exc.message}"},
+    )
 
 
 """ API METHODS """
@@ -101,7 +153,7 @@ async def create_user(
         )
     if db_email:
         raise HTTPException(status_code=400,
-                            detail=f"Email {user_obj.email} registered.")
+                            detail=f"Email has already been {user_obj.email} registered.")
     new_user = user_methods.create_user(database, w3, user_obj)
     return new_user
 
@@ -128,7 +180,7 @@ async def view_items(current_user: user_objects.User = Depends(
     return owned_items
 
 
-@app.post("users/items/transfer", tags=[tags[0]])
+@app.post("/users/items/transfer", tags=[tags[0]])
 async def transfer_item(
     item_id: int,
     receiver_attr: str,
@@ -223,14 +275,14 @@ async def forfeit_item(
     Forfeit/burn Item Token
     """
     item_methods.burn_item_token(
-        item_id, TXReqs(privatekey=current_user.accesskey, passkey=passkey))
+        TXReqs(privatekey=current_user.accesskey, passkey=passkey), item_id)
     return "Item {item_id} forfeited."
 
 
 @app.get("/items/get/item={item_id}", tags=[tags[1]])
 def get_item(item_id: int,
              database: Session = Depends(get_db),
-             current_user: user_objects.User = Depends(get_operator)):
+             current_user: user_objects.User = Depends(get_current_user)):
     """
     Display item token details by ID
     """

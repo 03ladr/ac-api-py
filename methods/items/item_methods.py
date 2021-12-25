@@ -14,6 +14,9 @@ from ..database import db_schemas
 from ..users.user_methods import get_user_publickey
 from ..onchain.onchain_methods import sendtx
 from ..onchain.onchain_objects import TXReqs
+# Error Handling
+import web3.exceptions as exceptions
+from ..exceptions.exception_handlers import OnChainExceptionHandler
 
 
 def create_item(ipfs, tx_reqs: TXReqs, item_obj: item_objects.ItemCreate) -> bool:
@@ -47,18 +50,18 @@ def transfer_item(database: Session, tx_reqs: TXReqs, item_id: int,
     Transfer Item Token
     """
     # Transfers item NFT via smart contract
-    transferred = sendtx(
-        tx_reqs.contract.functions.transferItemToken(
-            item_id,
-            get_user_publickey(database, receiver).decode()), tx_reqs)
-    # Returns None if Item transfer failed
-    if not transferred:
-        return None
+    try:
+        transferred = sendtx(
+            tx_reqs.contract.functions.transferItemToken(
+                item_id,
+                get_user_publickey(database, receiver).decode()), tx_reqs)
+    except exceptions.ContractLogicError as Error:
+        OnChainExceptionHandler(Error)
     # Returns True indicating successful transfer
     return True
 
 
-def get_item(database: Session, tx_reqs: TXReqs, item_id: int):
+def get_item(database: Session, tx_reqs: TXReqs, item_id: int) -> dict:
     """
     Get Item Token (metadata) after validating existence in-database
     """
@@ -67,24 +70,26 @@ def get_item(database: Session, tx_reqs: TXReqs, item_id: int):
         db_schemas.Item.id == item_id).options(load_only('id')).first()
     if not item_id:
         return None
-
     # Returns JSON Metadata Object
     return get_metadata(tx_reqs, item_id.id)
 
 
-def get_metadata(tx_reqs: TXReqs, item_id: int):
+def get_metadata(tx_reqs: TXReqs, item_id: int) -> dict:
     """
     Get Item Token metadata
     """
     # Fetches metadata URI -> loads as JSON
-    rawuri = tx_reqs.contract.functions.tokenURI(item_id).call()
+    try:
+        rawuri = tx_reqs.contract.functions.tokenURI(item_id).call()
+    except exceptions.ContractLogicError as Error:
+        OnChainExceptionHandler(Error)
     uri = urlopen(rawuri)
     metadata = json.load(uri)
     metadata['id'] = item_id
     return metadata
 
 
-def get_user_items(tx_reqs: TXReqs, address: str) -> List:
+def get_user_items(tx_reqs: TXReqs, address: str) -> List[dict]:
     """
     Get Item Tokens currently owned by a user
     """
@@ -97,8 +102,11 @@ def set_item_claimability(tx_reqs: TXReqs, item_id: int) -> bool:
     """
     Set claimability status of an Item Token
     """
-    item_claimability = sendtx(
-        tx_reqs.contract.functions.setItemClaimability(item_id), tx_reqs)
+    try:
+        item_claimability = sendtx(
+            tx_reqs.contract.functions.setItemClaimability(item_id), tx_reqs)
+    except exceptions.ContractLogicError as Error:
+        OnChainExceptionHandler(Error)
     return item_claimability
 
 
@@ -106,8 +114,11 @@ def get_item_claimability(tx_reqs: TXReqs, item_id: int) -> bool:
     """
     Get claimability status of an Item Token
     """
-    item_claimability = tx_reqs.contract.functions.viewItemClaimability(
-        item_id).call()
+    try:
+        item_claimability = tx_reqs.contract.functions.viewItemClaimability(
+            item_id).call()
+    except exceptions.ContractLogicError as Error:
+        OnChainExceptionHandler(Error)
     return item_claimability
 
 
@@ -115,16 +126,21 @@ def claim_item(tx_reqs: TXReqs, item_id: int) -> bool:
     """
     Claim Item Token
     """
-    sendtx(tx_reqs.contract.functions.claimItemToken(item_id), tx_reqs)
+    try:
+        sendtx(tx_reqs.contract.functions.claimItemToken(item_id), tx_reqs)
+    except exceptions.ContractLogicError as Error:
+        OnChainExceptionHandler(Error)
     return True
 
 
-def get_item_transfercount(database, item_id: int) -> int:
+def get_item_transfercount(database: Session, item_id: int) -> int:
     """
     Get transfer count of item
     """
     transfercount = database.query(db_schemas.Item).filter(
         db_schemas.Item.id == item_id).options(load_only('id')).first()
+    if not transfercount:
+        return None
     return transfercount.id
 
 
@@ -132,5 +148,8 @@ def burn_item_token(tx_reqs: TXReqs, item_id: int) -> bool:
     """
     Burn Item Token
     """
-    sendtx(tx_reqs.contract.functions.burnItemToken(item_id), tx_reqs)
+    try:
+        sendtx(tx_reqs.contract.functions.burnItemToken(item_id), tx_reqs)
+    except exceptions.ContractLogicError as Error:
+        OnChainExceptionHandler(Error)
     return True
