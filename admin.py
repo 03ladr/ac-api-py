@@ -15,6 +15,7 @@ from cursesmenu.items import *
 
 Session = SessionLocal()
 
+
 def user_interface():
     """
     Curses interface
@@ -34,10 +35,14 @@ def set_operator():
     db_user = user_methods.get_user_by(Session, user_attr)
     contract.functions.grantRole(user_methods.OPERATOR_ROLE,
                                  db_user.publickey.decode()).transact(
-                                    {"from": CONTRACT_CREATOR})
-    Session.query(db_schemas.User).filter(db_schemas.User.id == db_user.id).update({
-        "type": "operator", "brand": operator_brand}
-    )
+                                     {"from": CONTRACT_CREATOR})
+    Session.query(
+        db_schemas.User).filter(db_schemas.User.id == db_user.id).update({
+            "type":
+            "operator",
+            "brand":
+            operator_brand
+        })
     Session.commit()
 
 

@@ -1,6 +1,8 @@
 """
 Error Exception Objects
 """
+
+
 class PrivateKeyError(Exception):
     """
     Exception Raised Upon Incorrect Private Key Input
@@ -8,6 +10,7 @@ class PrivateKeyError(Exception):
     def __init__(self, message="Incorrect private key"):
         self.message = message
         super().__init__(self.message)
+
 
 class NonExistentTokenError(Exception):
     """
@@ -17,6 +20,7 @@ class NonExistentTokenError(Exception):
         self.message = message
         super().__init__(self.message)
 
+
 class OwnershipError(Exception):
     """
     Exception Raised Upon Non-Owner Item Token Interaction
@@ -25,6 +29,7 @@ class OwnershipError(Exception):
         self.message = message
         super().__init__(self.message)
 
+
 class NotOperatorError(Exception):
     """
     Exception Raised Upon Forbidden Non-Operator Interaction
@@ -32,6 +37,7 @@ class NotOperatorError(Exception):
     def __init__(self, message="Caller is not an operator"):
         self.message = message
         super().__init__(self.message)
+
 
 class NotClaimableError(Exception):
     """

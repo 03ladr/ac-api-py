@@ -12,25 +12,27 @@ from sqlalchemy.orm import Session, load_only
 from . import item_objects
 from ..database import db_schemas
 from ..users.user_methods import get_user_publickey
-from ..onchain.onchain_methods import sendtx
+from ..onchain.onchain_methods import buildtx
 from ..onchain.onchain_objects import TXReqs
 # Error Handling
 import web3.exceptions as exceptions
 from ..exceptions.exception_handlers import OnChainExceptionHandler
 
 
-def create_item(ipfs, tx_reqs: TXReqs, item_obj: item_objects.ItemCreate) -> bool:
+def create_item(ipfs, tx_reqs: TXReqs,
+                item_obj: item_objects.ItemCreate) -> bool:
     """
     Create Item Token
     """
     # Generates NFT metadata URL (hosted on IPFS)
     metadata_uri = create_metadata(ipfs, item_obj)
     # Mints Item NFT via smart contract
-    minted = sendtx(tx_reqs.contract.functions.mintItemToken(metadata_uri),
-                    tx_reqs)
-    # Returns None if Item creation failed
-    if not minted:
-        return None
+    try:
+        signed_tx = buildtx(
+            tx_reqs.contract.functions.mintItemToken(metadata_uri), tx_reqs)
+        tx_reqs.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
+    except exceptions.ContractLogicError as Error:
+        OnChainExceptionHandler(Error)
     # Returns True indicating successful creation
     return True
 
@@ -41,6 +43,7 @@ def create_metadata(ipfs, item_obj: item_objects.ItemCreate) -> str:
     """
     item_json = json.loads(item_obj.json())
     ipfs_metadata = ipfs.add_json(item_json)
+    # Returns URL to IPFS-hosted metadata
     return "http://127.0.0.1:8080/ipfs/{cid}".format(cid=ipfs_metadata)
 
 
@@ -51,10 +54,11 @@ def transfer_item(database: Session, tx_reqs: TXReqs, item_id: int,
     """
     # Transfers item NFT via smart contract
     try:
-        transferred = sendtx(
+        signed_tx = buildtx(
             tx_reqs.contract.functions.transferItemToken(
                 item_id,
                 get_user_publickey(database, receiver).decode()), tx_reqs)
+        tx_reqs.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
     except exceptions.ContractLogicError as Error:
         OnChainExceptionHandler(Error)
     # Returns True indicating successful transfer
@@ -70,7 +74,7 @@ def get_item(database: Session, tx_reqs: TXReqs, item_id: int) -> dict:
         db_schemas.Item.id == item_id).options(load_only('id')).first()
     if not item_id:
         return None
-    # Returns JSON Metadata Object
+    # Returns JSON metadata object
     return get_metadata(tx_reqs, item_id.id)
 
 
@@ -86,6 +90,7 @@ def get_metadata(tx_reqs: TXReqs, item_id: int) -> dict:
     uri = urlopen(rawuri)
     metadata = json.load(uri)
     metadata['id'] = item_id
+    # Return JSONized metadata object
     return metadata
 
 
@@ -95,6 +100,7 @@ def get_user_items(tx_reqs: TXReqs, address: str) -> List[dict]:
     """
     owned_ids = tx_reqs.contract.functions.ownedItemTokens(address).call()
     owned_items = [get_metadata(tx_reqs, id) for id in owned_ids]
+    # Return list of item metadatas
     return owned_items
 
 
@@ -103,10 +109,12 @@ def set_item_claimability(tx_reqs: TXReqs, item_id: int) -> bool:
     Set claimability status of an Item Token
     """
     try:
-        item_claimability = sendtx(
+        signed_tx = buildtx(
             tx_reqs.contract.functions.setItemClaimability(item_id), tx_reqs)
+        item_claimability = tx_reqs.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
     except exceptions.ContractLogicError as Error:
         OnChainExceptionHandler(Error)
+    # Return newly set claimability status
     return item_claimability
 
 
@@ -119,6 +127,7 @@ def get_item_claimability(tx_reqs: TXReqs, item_id: int) -> bool:
             item_id).call()
     except exceptions.ContractLogicError as Error:
         OnChainExceptionHandler(Error)
+    # Return item claimability boolean
     return item_claimability
 
 
@@ -127,9 +136,12 @@ def claim_item(tx_reqs: TXReqs, item_id: int) -> bool:
     Claim Item Token
     """
     try:
-        sendtx(tx_reqs.contract.functions.claimItemToken(item_id), tx_reqs)
+        signed_tx = buildtx(tx_reqs.contract.functions.claimItemToken(item_id),
+                            tx_reqs)
+        tx_reqs.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
     except exceptions.ContractLogicError as Error:
         OnChainExceptionHandler(Error)
+    # Return True indicating successful burn
     return True
 
 
@@ -141,7 +153,8 @@ def get_item_transfercount(database: Session, item_id: int) -> int:
         db_schemas.Item.id == item_id).options(load_only('id')).first()
     if not transfercount:
         return None
-    return transfercount.id
+    # Return transfer count
+    return transfercount.transfers
 
 
 def burn_item_token(tx_reqs: TXReqs, item_id: int) -> bool:
@@ -149,7 +162,10 @@ def burn_item_token(tx_reqs: TXReqs, item_id: int) -> bool:
     Burn Item Token
     """
     try:
-        sendtx(tx_reqs.contract.functions.burnItemToken(item_id), tx_reqs)
+        signed_tx = buildtx(tx_reqs.contract.functions.burnItemToken(item_id),
+                            tx_reqs)
+        tx_reqs.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
     except exceptions.ContractLogicError as Error:
         OnChainExceptionHandler(Error)
+    # Return True indicating successful burn
     return True

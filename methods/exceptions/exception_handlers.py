@@ -4,6 +4,7 @@ Exception Handler(s)
 # Exception Objects
 from .exception_objects import *
 
+
 def OnChainExceptionHandler(exception: Exception) -> Exception:
     """
     Exception Handler For On-Chain Transactions

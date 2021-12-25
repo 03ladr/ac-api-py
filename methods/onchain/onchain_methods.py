@@ -1,19 +1,25 @@
 """
 On-Chain Methods/Functions
 """
+# AES decryption module
 from ..cryptography.aes_methods import aes_decrypt
+# Transaction Sending Object
 from .onchain_objects import TXReqs
+# Exception Objects
 from ..exceptions.exception_objects import PrivateKeyError
 from eth_utils.exceptions import ValidationError
+# SignedTransaction Object
+from eth_account.datastructures import SignedTransaction
 
-def sendtx(function, tx_reqs: TXReqs):
+def buildtx(function, tx_reqs: TXReqs) -> SignedTransaction:
     """
     Send On-Chain Transaction
     """
     # Loading senders account
     privatekey = aes_decrypt(tx_reqs.privatekey, tx_reqs.passkey)
     try:
-        sender = tx_reqs.w3.eth.account.privateKeyToAccount(privatekey.decode())
+        sender = tx_reqs.w3.eth.account.privateKeyToAccount(
+            privatekey.decode())
     except (ValidationError, ValueError):
         raise PrivateKeyError
 
@@ -25,9 +31,6 @@ def sendtx(function, tx_reqs: TXReqs):
     }
     rawtx = function.buildTransaction(txdeps)
 
-    # Signing then sending transaction
-    signedtx = sender.signTransaction(rawtx)
-    txoutput = tx_reqs.w3.eth.sendRawTransaction(signedtx.rawTransaction)
-
-    # Returning tx hash
-    return txoutput
+    # Signing and returning transaction object
+    signed_tx = sender.signTransaction(rawtx)
+    return signed_tx

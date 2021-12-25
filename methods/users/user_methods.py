@@ -14,7 +14,8 @@ from . import user_objects
 OPERATOR_ROLE = "0x97667070c54ef182b0f5858b034beac1b6f3089aa2d3188bb1e8929f4fa9b929"
 
 
-def create_user(database: Session, w3, user: user_objects.User) -> user_objects.User:
+def create_user(database: Session, w3,
+                user: user_objects.User) -> user_objects.User:
     """
     Create User Account
     """

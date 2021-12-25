@@ -36,7 +36,6 @@ load_db()
 create_task(populate_db())
 """ FASTAPI INIT """
 app = FastAPI()
-""" API FUNCTIONS """
 
 
 """ API FUNCTIONS """
@@ -50,7 +49,7 @@ def create_jwt(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(minutes=30)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, JWTKEY, algorithm="HS256")
     return encoded_jwt
@@ -152,8 +151,9 @@ async def create_user(
             detail=f"Username {user_obj.username} has already been registered."
         )
     if db_email:
-        raise HTTPException(status_code=400,
-                            detail=f"Email has already been {user_obj.email} registered.")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Email has already been {user_obj.email} registered.")
     new_user = user_methods.create_user(database, w3, user_obj)
     return new_user
 
@@ -205,7 +205,7 @@ async def transfer_item(
 def get_user(
     user_attr: str,
     database: Session = Depends(get_db),
-    current_user: user_objects.User = Depends(get_operator)
+    current_user: user_objects.User = Depends(get_current_user)
 ) -> user_objects.User:
     """
     Display account details by value
@@ -231,7 +231,8 @@ async def create_item(
     Create item token
     """
     created_item = item_methods.create_item(
-        ipfs, TXReqs(privatekey=current_operator.accesskey, passkey=passkey), item_obj)
+        ipfs, TXReqs(privatekey=current_operator.accesskey, passkey=passkey),
+        item_obj)
     if not created_item:
         raise HTTPException(status_code=400, detail="Item creation failed.")
     return "Item created."
@@ -276,7 +277,7 @@ async def forfeit_item(
     """
     item_methods.burn_item_token(
         TXReqs(privatekey=current_user.accesskey, passkey=passkey), item_id)
-    return "Item {item_id} forfeited."
+    return f"Item {item_id} forfeited."
 
 
 @app.get("/items/get/item={item_id}", tags=[tags[1]])

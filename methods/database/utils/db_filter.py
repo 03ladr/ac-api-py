@@ -36,15 +36,15 @@ class ItemFilters:
         if burns:
             for burn in burns:
                 item_id = burn['args']['itemid']
-                db_item = Item(id=item_id)
-                self.db.delete(db_item)
+                self.db.filter(id=item_id).delete()
                 self.db.commit()
 
         if transfers:
             for transfer in transfers:
                 item_id = transfer['args']['itemid']
                 transfercount = self.db.query(Item).filter(
-                    Item.id == item_id).options(load_only('transfers')).first()
+                    Item.id == item_id).options(
+                        load_only('transfers')).first()
                 if not transfercount.transfers:
                     transfercount.transfers = 0
                 self.db.query(Item).filter(Item.id == item_id).update(
