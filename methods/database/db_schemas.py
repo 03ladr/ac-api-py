@@ -22,7 +22,6 @@ class User(Base):
     User Database  Table
     """
     __tablename__ = "users"
-
     id = Column(String, primary_key=True, index=True)
     publickey = Column(LargeBinary, unique=True, index=True)
     accesskey = Column(LargeBinary, unique=True)
@@ -39,6 +38,5 @@ class Item(Base):
     Item Database Table
     """
     __tablename__ = "items"
-
     id = Column(Integer, primary_key=True, index=True)
     transfers = Column(Integer)

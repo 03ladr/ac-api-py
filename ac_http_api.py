@@ -94,7 +94,7 @@ async def get_operator(current_user: user_objects.User = Depends(
 
 
 @app.exception_handler(PrivateKeyError)
-async def exception_handler(request: Request, exc: PrivateKeyError):
+async def badpkey_handler(request: Request, exc: PrivateKeyError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"{exc.message}"},
@@ -102,7 +102,7 @@ async def exception_handler(request: Request, exc: PrivateKeyError):
 
 
 @app.exception_handler(OwnershipError)
-async def exception_handler(request: Request, exc: OwnershipError):
+async def notowner_handler(request: Request, exc: OwnershipError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"{exc.message}"},
@@ -110,7 +110,7 @@ async def exception_handler(request: Request, exc: OwnershipError):
 
 
 @app.exception_handler(NonExistentTokenError)
-async def exception_handler(request: Request, exc: NonExistentTokenError):
+async def nonexist_handler(request: Request, exc: NonExistentTokenError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"{exc.message}"},
@@ -118,7 +118,7 @@ async def exception_handler(request: Request, exc: NonExistentTokenError):
 
 
 @app.exception_handler(NotOperatorError)
-async def exception_handler(request: Request, exc: NotOperatorError):
+async def notop_handler(request: Request, exc: NotOperatorError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"{exc.message}"},
@@ -126,7 +126,7 @@ async def exception_handler(request: Request, exc: NotOperatorError):
 
 
 @app.exception_handler(NotClaimableError)
-async def exception_handler(request: Request, exc: NotClaimableError):
+async def nonclaim_handler(request: Request, exc: NotClaimableError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"{exc.message}"},
