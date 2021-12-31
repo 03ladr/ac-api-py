@@ -5,7 +5,7 @@ Error Exception Objects
 
 class PrivateKeyError(Exception):
     """
-    Exception Raised Upon Incorrect Private Key Input
+    Exception raised upon invalid private key input
     """
     def __init__(self, message="Incorrect private key"):
         self.message = message
@@ -14,7 +14,7 @@ class PrivateKeyError(Exception):
 
 class NonExistentTokenError(Exception):
     """
-    Exception Raised Upon Nonexistent Token Interaction
+    Exception taised upon nonexistent token interaction
     """
     def __init__(self, message="Nonexistent Item Token"):
         self.message = message
@@ -23,7 +23,7 @@ class NonExistentTokenError(Exception):
 
 class OwnershipError(Exception):
     """
-    Exception Raised Upon Non-Owner Item Token Interaction
+    Exception raised upon non-owner item token interaction
     """
     def __init__(self, message="Caller is not owner"):
         self.message = message
@@ -32,7 +32,7 @@ class OwnershipError(Exception):
 
 class NotOperatorError(Exception):
     """
-    Exception Raised Upon Forbidden Non-Operator Interaction
+    Exception raised upon forbidden non-operator interaction
     """
     def __init__(self, message="Caller is not an operator"):
         self.message = message
@@ -41,8 +41,17 @@ class NotOperatorError(Exception):
 
 class NotClaimableError(Exception):
     """
-    Exception Raised Upon Claiming Non-Claimable Item Token
+    Exception raised upon claim attempt on non-claimable item token
     """
     def __init__(self, message="Item Token is not claimable"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class UnknownAccountError(Exception):
+    """
+    Exception raised upon interacting with nonexistent account
+    """
+    def __init__(self, message="User not found"):
         self.message = message
         super().__init__(self.message)

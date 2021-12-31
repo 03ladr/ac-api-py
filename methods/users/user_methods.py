@@ -10,6 +10,9 @@ from sqlalchemy import or_
 from ..database import db_schemas
 # User Modules
 from . import user_objects
+# Error Handling
+from ..exceptions.exception_objects import UnknownAccountError
+
 
 OPERATOR_ROLE = "0x97667070c54ef182b0f5858b034beac1b6f3089aa2d3188bb1e8929f4fa9b929"
 
@@ -85,6 +88,9 @@ def get_user_publickey(database: Session, user_attr: str) -> bytes:
             db_schemas.User.email == user_attr,
             db_schemas.User.id == user_attr)).options(
                 load_only('publickey')).first())
+    if not publickey:
+        raise UnknownAccountError
+    # Returns users public key
     return publickey.publickey
 
 

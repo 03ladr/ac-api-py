@@ -5,7 +5,6 @@ User Objects
 from typing import Optional
 from pydantic import BaseModel, constr
 from ..database.db_schemas import AccountType
-
 # User ID Object
 UserID = constr(min_length=10, max_length=10)
 
@@ -47,6 +46,7 @@ class Account(Operator):
     Account Type Enum Object
     """
     type: AccountType
+    reporting: bool
 
     class Config:
         orm_mode = True

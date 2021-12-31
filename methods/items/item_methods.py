@@ -69,13 +69,25 @@ def get_item(database: Session, tx_reqs: TXReqs, item_id: int) -> dict:
     """
     Get Item Token (metadata) after validating existence in-database
     """
-    # Verifies items existence in-database
-    item_id = database.query(db_schemas.Item).filter(
-        db_schemas.Item.id == item_id).options(load_only('id')).first()
-    if not item_id:
+    # Obtains items existence in-database
+    item_obj = database.query(db_schemas.Item).filter(
+        db_schemas.Item.id == item_id).first()
+    if not item_obj:
         return None
-    # Returns JSON metadata object
-    return get_metadata(tx_reqs, item_id.id)
+    # Obtains and formats JSONized metadata
+    metadata = get_metadata(tx_reqs, item_id)
+    metadata['transfer_count'] = item_obj.transfers
+    metadata['avg_hold_time'] = str(item_obj.holdtime_avg).split('.')[:-1][0]
+    metadata['creation_date'] = item_obj.creation_date.strftime("%m/%d/%y")
+    # If set to stolen or lost, add report information to the metadata
+    if item_obj.stolen_status or item_obj.lost_status == True:
+        report = {
+                    'stolen':item_obj.stolen_status, 
+                    'lost':item_obj.lost_status
+                }
+        metadata['report'] = report
+    # Returns formatted metadata
+    return metadata
 
 
 def get_metadata(tx_reqs: TXReqs, item_id: int) -> dict:
@@ -94,12 +106,12 @@ def get_metadata(tx_reqs: TXReqs, item_id: int) -> dict:
     return metadata
 
 
-def get_user_items(tx_reqs: TXReqs, address: str) -> List[dict]:
+def get_user_items(database: Session, tx_reqs: TXReqs, address: str) -> List[dict]:
     """
     Get Item Tokens currently owned by a user
     """
     owned_ids = tx_reqs.contract.functions.ownedItemTokens(address).call()
-    owned_items = [get_metadata(tx_reqs, id) for id in owned_ids]
+    owned_items = [get_item(database, tx_reqs, id) for id in owned_ids]
     # Return list of item metadatas
     return owned_items
 

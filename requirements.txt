@@ -1,5 +1,6 @@
 curses_menu==0.5.0
 cursesmenu==0.0.1a0
+eth_account==0.5.6
 eth_utils==2.0.0
 ipfshttpclient==0.7.0
 jose==1.0.0

@@ -4,7 +4,7 @@ Database schemas
 # Utilities
 import enum
 # Database Connectivity/Tooling
-from sqlalchemy import Enum, Column, Integer, String
+from sqlalchemy import Enum, Column, Integer, String, Boolean, DateTime, Interval
 from sqlalchemy.types import LargeBinary
 from .database import Base
 
@@ -30,9 +30,8 @@ class User(Base):
     email = Column(String, unique=True, nullable=True)
     type = Column(Enum(AccountType), server_default="user")
     brand = Column(String, unique=True, nullable=True)
+    reporting = Column(Boolean)
 
-
-# Item Table
 class Item(Base):
     """
     Item Database Table
@@ -40,3 +39,7 @@ class Item(Base):
     __tablename__ = "items"
     id = Column(Integer, primary_key=True, index=True)
     transfers = Column(Integer)
+    holdtime_avg = Column(Interval)
+    creation_date = Column(DateTime)
+    stolen_status = Column(Boolean)
+    lost_status = Column(Boolean)

@@ -21,9 +21,7 @@ class ItemCreate(BaseModel):
     name: str
     description: str
     image: str
-    date: str
     brand: str
-    lister: str
     attributes: List[ItemAttribute]
 
 
@@ -33,6 +31,9 @@ class Item(ItemCreate):
     """
     id: int
     transfers: int
+    verifications = int
+    stolen_status = bool
+    lost_status = bool
 
     class Config:
         orm_mode = True

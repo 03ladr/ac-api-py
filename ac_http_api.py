@@ -133,6 +133,14 @@ async def nonclaim_handler(request: Request, exc: NotClaimableError) -> JSONResp
     )
 
 
+@app.exception_handler(UnknownAccountError)
+async def badacc_handler(request:  Request, exc: UnknownAccountError) -> JSONResponse:
+    return JSONResponse(
+        status_code=418,
+        content={"message": f"{exc.message}"},
+    )
+
+
 """ API METHODS """
 
 
@@ -169,11 +177,11 @@ async def current_user_info(current_user: user_objects.User = Depends(
 
 @app.get("/users/items/view", tags=[tags[0]])
 async def view_items(current_user: user_objects.User = Depends(
-    get_current_user)) -> List:
+    get_current_user), database: Session = Depends(get_db)) -> List:
     """
     View owned items of currently logged in user
     """
-    owned_items = item_methods.get_user_items(TXReqs(),
+    owned_items = item_methods.get_user_items(database, TXReqs(),
                                               current_user.publickey.decode())
     if not owned_items:
         raise HTTPException(status_code=404, detail="No items found.")
