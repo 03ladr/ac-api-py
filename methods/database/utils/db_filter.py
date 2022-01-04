@@ -25,7 +25,7 @@ class ItemFilters:
         Filter function
         """
         mints = self.mintfilter.get_new_entries()
-        burns = self.mintfilter.get_new_entries()
+        burns = self.burnfilter.get_new_entries()
         transfers = self.transferfilter.get_new_entries()
 
         if mints:
@@ -53,7 +53,12 @@ class ItemFilters:
                 except ZeroDivisionError:
                     avg_hold_time = elapsed_time
                 self.db.query(Item).filter(Item.id == item_id).update(
-                    {'transfers': item_obj.transfers + 1, 'holdtime_avg': avg_hold_time})
+                        {
+                            'transfers': item_obj.transfers + 1,
+                            'holdtime_avg': avg_hold_time,
+                            'report_to': None,
+                            'missing_status': False
+                        })
                 self.db.commit()
 
         return True

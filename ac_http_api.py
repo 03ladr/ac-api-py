@@ -231,7 +231,7 @@ def get_user(
 
 @app.post("/items/create", tags=[tags[1]])
 async def create_item(
-    item_obj: item_objects.ItemCreate,
+    item_obj_list: List[item_objects.ItemCreate],
     passkey: str,
     current_operator: user_objects.User = Depends(get_operator)
 ) -> str:
@@ -240,7 +240,7 @@ async def create_item(
     """
     created_item = item_methods.create_item(
         ipfs, TXReqs(privatekey=current_operator.accesskey, passkey=passkey),
-        item_obj)
+        item_obj_list)
     if not created_item:
         raise HTTPException(status_code=400, detail="Item creation failed.")
     return "Item created."
@@ -269,9 +269,9 @@ async def toggle_item_claimability(
     """
     Toggle item claimability
     """
-    item_claimability = item_methods.set_item_claimability(
+    item_methods.set_item_claimability(
         TXReqs(privatekey=current_user.accesskey, passkey=passkey), item_id)
-    return f"Item claimability status: {item_claimability}"
+    return f"Item claimability changed."
 
 
 @app.post("/items/forfeit", tags=[tags[1]])

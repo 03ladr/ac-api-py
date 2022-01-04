@@ -30,7 +30,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=True)
     type = Column(Enum(AccountType), server_default="user")
     brand = Column(String, unique=True, nullable=True)
-    reporting = Column(Boolean)
+
 
 class Item(Base):
     """
@@ -41,5 +41,5 @@ class Item(Base):
     transfers = Column(Integer)
     holdtime_avg = Column(Interval)
     creation_date = Column(DateTime)
-    stolen_status = Column(Boolean)
-    lost_status = Column(Boolean)
+    missing_status = Column(Boolean, default=False)
+    report_to = Column(String, nullable=True)
