@@ -32,7 +32,8 @@ def create_item(ipfs, tx_reqs: TXReqs,
         # Mints Item NFT via smart contract
         try:
             signed_tx = buildtx(
-                tx_reqs.contract.functions.mintItemToken(metadata_uri), tx_reqs)
+                tx_reqs.contract.functions.mintItemToken(metadata_uri),
+                tx_reqs)
             tx_reqs.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
         except exceptions.ContractLogicError as Error:
             OnChainExceptionHandler(Error)
@@ -73,8 +74,8 @@ def get_item(database: Session, tx_reqs: TXReqs, item_id: int) -> dict:
     Get Item Token (metadata) after validating existence in-database
     """
     # Obtains items existence in-database
-    item_obj = database.query(db_schemas.Item).filter(
-        db_schemas.Item.id == item_id).first()
+    item_obj = database.query(
+        db_schemas.Item).filter(db_schemas.Item.id == item_id).first()
     if not item_obj:
         return None
     # Obtains and formats JSONized metadata
@@ -83,13 +84,14 @@ def get_item(database: Session, tx_reqs: TXReqs, item_id: int) -> dict:
     metadata['creation_date'] = item_obj.creation_date.strftime("%m/%d/%y")
     # If an average hold time is recorded, add that data to the metadata
     if item_obj.holdtime_avg:
-        metadata['avg_hold_time'] = str(item_obj.holdtime_avg).split('.')[:-1][0]
+        metadata['avg_hold_time'] = str(
+            item_obj.holdtime_avg).split('.')[:-1][0]
     # If set to stolen or lost, add report information to the metadata
     if item_obj.missing_status == True:
         report = {
-                    'missing':item_obj.stolen_status, 
-                    'report_to':item_obj.report_to
-                }
+            'missing': item_obj.stolen_status,
+            'report_to': item_obj.report_to
+        }
         metadata['report'] = report
     # Returns formatted metadata
     return metadata
@@ -111,7 +113,8 @@ def get_metadata(tx_reqs: TXReqs, item_id: int) -> dict:
     return metadata
 
 
-def get_user_items(database: Session, tx_reqs: TXReqs, address: str) -> List[dict]:
+def get_user_items(database: Session, tx_reqs: TXReqs,
+                   address: str) -> List[dict]:
     """
     Get Item Tokens currently owned by a user
     """
@@ -121,7 +124,9 @@ def get_user_items(database: Session, tx_reqs: TXReqs, address: str) -> List[dic
     return owned_items
 
 
-def set_item_claimability(tx_reqs: TXReqs, item_id: int) -> None: # return to bool after updating contract
+def set_item_claimability(
+        tx_reqs: TXReqs,
+        item_id: int) -> None:  # return to bool after updating contract
     """
     Set claimability status of an Item Token
     """
@@ -163,18 +168,6 @@ def claim_item(tx_reqs: TXReqs, item_id: int) -> True:
     return True
 
 
-def get_item_transfercount(database: Session, item_id: int) -> int:
-    """
-    Get transfer count of item
-    """
-    transfercount = database.query(db_schemas.Item).filter(
-        db_schemas.Item.id == item_id).options(load_only('id')).first()
-    if not transfercount:
-        return None
-    # Return transfer count
-    return transfercount.transfers
-
-
 def burn_item_token(tx_reqs: TXReqs, item_id: int) -> True:
     """
     Burn Item Token
@@ -189,36 +182,34 @@ def burn_item_token(tx_reqs: TXReqs, item_id: int) -> True:
     return True
 
 
-def report_item_missing(database: Session, tx_reqs: TXReqs, sender: User, item_id: int) -> True:
+def toggle_item_missing(database: Session, tx_reqs: TXReqs, sender: User,
+                        item_id: int) -> bool:
     """
     Report item as stolen/missing
     """
+    # If the item token does not exist, raise exception
     try:
-        if (sender.publickey != tx_reqs.contract.functions.ownerOf(item_id).call()):
-            raise OwnershipError
+        item_owner = tx_reqs.contract.functions.ownerOf(item_id).call()
     except:
         raise NonExistentTokenError
-    # Create db query updating report-to and missing-status
-    db_update = {
+    # If the caller is not the token owner, raise exception
+    if sender.publickey.decode() != item_owner:
+        raise OwnershipError
+    # Query db to check current missing status
+    item_obj = database.query(
+        db_schemas.Item).filter(db_schemas.Item.id == item_id).options(
+            load_only('missing_status')).first()
+    # Depending on whether the item is set as missing or not, construct an updating db query
+    if item_obj.missing_status == True:
+        db_update = {'report_to': None, 'missing_status': False}
+    elif item_obj.missing_status == False:
+        db_update = {
             'report_to': sender.email,
             'missing_status': True,
-            }
-    database.query(db_schemas.Item).filter(db_schemas.Item.id == item_id).update(db_update)
-    # Return True indicating missing item status
-    return True
-
-
-def report_item_found(database: Session, tx_reqs: TXReqs, sender: User, item_id: int) -> False:
-    try:
-        if (sender.publickey != tx_reqs.contract.functions.ownerOf(item_id)):
-            raise OwnershipError
-    except:
-        raise NonExistentTokenError
-    # Create db query resetting report-to and missing-status
-    db_update = {
-            'report_to': None,
-            'missing_status': False
-            }
-    database.query(db_schemas.Item).filter(db_schemas.Item.id == item_id).update(db_update)
-    # Return False reflecting newly set missing status
-    return False
+        }
+    # Dispatch db update
+    database.query(db_schemas.Item).filter(
+        db_schemas.Item.id == item_id).update(db_update)
+    database.commit()
+    # Return updated missing status
+    return db_update['missing_status']

@@ -20,17 +20,27 @@ class UserBase(BaseModel):
     passkey: str
 
 
-class User(BaseModel):
+class UserDisplay(BaseModel):
     """
-    User Object
+    User 'Display' Object
+    No sensitive information is included
     """
     id: UserID
     username: str
-    email: str
     publickey: bytes
-
+    
     class Config:
         orm_mode = True
+
+
+class User(UserDisplay):
+    """
+    User Object
+    """
+    email: str
+
+    #class Config:
+    #    orm_mode = True
 
 
 class Operator(User):
@@ -39,8 +49,8 @@ class Operator(User):
     """
     brand: Optional[str] = None
 
-    class Config:
-        orm_mode = True
+    #class Config:
+    #    orm_mode = True
 
 
 class Account(Operator):
@@ -50,5 +60,5 @@ class Account(Operator):
     type: AccountType
     reporting: bool
 
-    class Config:
-        orm_mode = True
+    #class Config:
+    #    orm_mode = True

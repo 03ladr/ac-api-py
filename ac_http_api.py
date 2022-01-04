@@ -208,7 +208,7 @@ async def transfer_item(
 
 
 @app.get("/users/get/user={user_attr}",
-         response_model=user_objects.User,
+         response_model=user_objects.UserDisplay,
          tags=[tags[0]])
 def get_user(
     user_attr: str,
@@ -271,7 +271,20 @@ async def toggle_item_claimability(
     """
     item_methods.set_item_claimability(
         TXReqs(privatekey=current_user.accesskey, passkey=passkey), item_id)
-    return f"Item claimability changed."
+    return "Item claimability changed."
+
+
+@app.post("/items/missing/set", tags=[tags[1]])
+async def toggle_item_missing(
+        item_id: int,
+        database: Session = Depends(get_db),
+        current_user: user_objects.User = Depends(get_current_user)
+) -> str:
+    """
+    Toggle item missing status
+    """
+    missing_status = item_methods.toggle_item_missing(database, TXReqs(), current_user, item_id)
+    return f"{item_id} Missing Status: {missing_status}"
 
 
 @app.post("/items/forfeit", tags=[tags[1]])
@@ -290,8 +303,7 @@ async def forfeit_item(
 
 @app.get("/items/get/item={item_id}", tags=[tags[1]])
 def get_item(item_id: int,
-             database: Session = Depends(get_db),
-             current_user: user_objects.User = Depends(get_current_user)):
+        database: Session = Depends(get_db)) -> item_objects.Item:
     """
     Display item token details by ID
     """
@@ -299,33 +311,6 @@ def get_item(item_id: int,
     if item_obj is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return item_obj
-
-
-@app.get("/items/verify/id={item_id}", tags=[tags[1]])
-async def verify_item(
-    item_id: int, database: Session = Depends(get_db)) -> str:
-    """
-    Verify item token
-    """
-    item_obj = item_methods.get_item(database, TXReqs(), item_id)
-    if not item_obj:
-        raise HTTPException(status_code=404,
-                            detail="Item unknown/unauthenticated!")
-    item_obj['AUTHENTIC'] = True
-    return item_obj
-
-
-@app.get("/items/transfercount/view", tags=[tags[1]])
-async def get_item_transfer_count(
-    item_id: int,
-    database: Session = Depends(get_db),
-    current_user: user_objects.User = Depends(get_current_user)
-) -> str:
-    """
-    Get item transfer count
-    """
-    item_claimability = item_methods.get_item_transfercount(database, item_id)
-    return f"Item transfer count: {item_claimability}"
 
 
 @app.get("/items/claimability/view", tags=[tags[1]])
