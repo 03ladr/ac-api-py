@@ -11,6 +11,7 @@ from eth_utils.exceptions import ValidationError
 # SignedTransaction Object
 from eth_account.datastructures import SignedTransaction
 
+
 def buildtx(function, tx_reqs: TXReqs) -> SignedTransaction:
     """
     Send On-Chain Transaction
