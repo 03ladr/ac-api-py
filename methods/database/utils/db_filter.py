@@ -38,7 +38,7 @@ class ItemFilters:
         if burns:
             for burn in burns:
                 item_id = burn['args']['itemid']
-                self.db.filter(id=item_id).delete()
+                self.db.query(Item).filter(id=item_id).delete()
                 self.db.commit()
 
         if transfers:
