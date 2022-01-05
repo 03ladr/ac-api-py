@@ -207,7 +207,7 @@ async def transfer_item(
     return f"Item {item_id} transferred to user {receiver_attr}."
 
 
-@app.get("/users/get/user={user_attr}",
+@app.get("/users/get",
          response_model=user_objects.UserDisplay,
          tags=[tags[0]])
 def get_user(
@@ -260,7 +260,7 @@ async def claim_item(
     return f"Item {item_id} has been claimed"
 
 
-@app.post("/items/claimability/set", tags=[tags[1]])
+@app.post("/items/set/claimability", tags=[tags[1]])
 async def toggle_item_claimability(
     item_id: int,
     passkey: str,
@@ -274,7 +274,7 @@ async def toggle_item_claimability(
     return "Item claimability changed."
 
 
-@app.post("/items/missing/set", tags=[tags[1]])
+@app.post("/items/set/missing", tags=[tags[1]])
 async def toggle_item_missing(
         item_id: int,
         database: Session = Depends(get_db),
@@ -301,7 +301,7 @@ async def forfeit_item(
     return f"Item {item_id} forfeited."
 
 
-@app.get("/items/get/item={item_id}", tags=[tags[1]])
+@app.get("/items/get", response_model=item_objects.Item, tags=[tags[1]])
 def get_item(item_id: int,
         database: Session = Depends(get_db)) -> item_objects.Item:
     """
@@ -313,7 +313,7 @@ def get_item(item_id: int,
     return item_obj
 
 
-@app.get("/items/claimability/view", tags=[tags[1]])
+@app.get("/items/view/claimability", tags=[tags[1]])
 async def view_item_claimability(
     item_id: int, current_user: user_objects.User = Depends(get_current_user)
 ) -> str:
@@ -322,6 +322,20 @@ async def view_item_claimability(
     """
     item_claimability = item_methods.get_item_claimability(TXReqs(), item_id)
     return f"Item claimability status: {item_claimability}"
+
+
+@app.get("/items/view/owner", response_model=user_objects.UserDisplay, tags=[tags[1]])
+async def view_item_owner(item_id: int) -> str:
+    """
+    View owner of provided item token
+    """
+    try:
+        owner_publickey = contract.functions.ownerOf(item_id).call()
+    except:
+        raise NonExistentTokenError
+    owner_obj = database.query(User).filter(User.publickey == owner_publickey).options(
+        load_only('id', 'publickey', 'username')).first()
+    return owner_obj
 
 
 @app.post("/token", response_model=Token, tags=[tags[2]])
