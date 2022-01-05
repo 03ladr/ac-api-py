@@ -15,7 +15,7 @@ from methods.onchain.onchain_config import w3, contract
 from methods.onchain.onchain_objects import TXReqs
 # FastAPI Dependencies/Tooling
 from jose import JWTError, jwt
-from fastapi import HTTPException, Depends, FastAPI, status
+from fastapi import HTTPException, Depends, FastAPI, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
 from methods.fastapi.fastapi_config import oauth2_scheme
@@ -94,7 +94,7 @@ async def get_operator(current_user: user_objects.User = Depends(
 
 
 @app.exception_handler(PrivateKeyError)
-async def badpkey_handler(exc: PrivateKeyError) -> JSONResponse:
+async def badpkey_handler(request: Request, exc: PrivateKeyError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"{exc.message}"},
@@ -102,7 +102,7 @@ async def badpkey_handler(exc: PrivateKeyError) -> JSONResponse:
 
 
 @app.exception_handler(OwnershipError)
-async def notowner_handler(exc: OwnershipError) -> JSONResponse:
+async def notowner_handler(request: Request, exc: OwnershipError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"{exc.message}"},
@@ -110,7 +110,7 @@ async def notowner_handler(exc: OwnershipError) -> JSONResponse:
 
 
 @app.exception_handler(NonExistentTokenError)
-async def nonexist_handler(exc: NonExistentTokenError) -> JSONResponse:
+async def nonexist_handler(request: Request, exc: NonExistentTokenError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"{exc.message}"},
@@ -118,7 +118,7 @@ async def nonexist_handler(exc: NonExistentTokenError) -> JSONResponse:
 
 
 @app.exception_handler(NotOperatorError)
-async def notop_handler(exc: NotOperatorError) -> JSONResponse:
+async def notop_handler(request: Request, exc: NotOperatorError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"{exc.message}"},
@@ -126,7 +126,7 @@ async def notop_handler(exc: NotOperatorError) -> JSONResponse:
 
 
 @app.exception_handler(NotClaimableError)
-async def nonclaim_handler(exc: NotClaimableError) -> JSONResponse:
+async def nonclaim_handler(request: Request, exc: NotClaimableError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"{exc.message}"},
@@ -134,7 +134,7 @@ async def nonclaim_handler(exc: NotClaimableError) -> JSONResponse:
 
 
 @app.exception_handler(UnknownAccountError)
-async def badacc_handler(exc: UnknownAccountError) -> JSONResponse:
+async def badacc_handler(request: Request, exc: UnknownAccountError) -> JSONResponse:
     return JSONResponse(
         status_code=418,
         content={"message": f"{exc.message}"},
