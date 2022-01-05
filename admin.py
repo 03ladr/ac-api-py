@@ -1,5 +1,6 @@
 """
-Admin Method API
+Curses Admin Interface
+To be replaced with fastapi
 """
 # Cryptography modules
 from methods.database.database import SessionLocal
