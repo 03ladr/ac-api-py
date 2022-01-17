@@ -30,5 +30,5 @@ class TransferLog(Base):
     id = Column(Integer, index=True)
     date = Column(DateTime)
     to = Column(LargeBinary, index=True)
-    from = Column(LargeBinary, index=True)
+    sent_from = Column(LargeBinary, index=True)
     from_ip = Column(INET, index=True)

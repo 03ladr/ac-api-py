@@ -11,11 +11,11 @@ from sqlalchemy.orm import sessionmaker
 import ipfshttpclient
 
 # Connecting to database and creating a usage session
-engine = create_engine(getenv(DATABASE_URL))
+engine = create_engine("postgresql://plasma:pass@localhost/authentichain")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Base class declaration
 Base = declarative_base()
 
 # IPFS connection
-ipfs = ipfshttpclient.connect(getenv(IPFS_URL))
+ipfs = ipfshttpclient.connect("/ip4/127.0.0.1/tcp/5001")
