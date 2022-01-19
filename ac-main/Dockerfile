@@ -4,4 +4,6 @@ FROM python:3.10
 
 WORKDIR /ac-main-docker
 
-COPY * .
+COPY ./* ./
+
+EXPOSE 8080
