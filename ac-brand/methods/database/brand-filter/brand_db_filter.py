@@ -4,7 +4,7 @@ Smart contract event log --> database population module
 # Utilities
 from datetime import datetime
 # Database Dependencies
-from ..db_schemas import Item
+from ..db_schemas import Item, TransferLog
 from sqlalchemy.orm import load_only
 
 
@@ -24,6 +24,8 @@ class ItemFilters:
         """
         Filter function
         """
+        current_time = datetime.now()
+
         mints = self.mintfilter.get_new_entries()
         burns = self.burnfilter.get_new_entries()
         transfers = self.transferfilter.get_new_entries()
@@ -47,7 +49,7 @@ class ItemFilters:
                 item_obj = self.db.query(Item).filter(
                     Item.id == item_id).options(
                         load_only('transfers', 'creation_date')).first() 
-                elapsed_time = datetime.now() - item_obj.creation_date
+                elapsed_time = current_time - item_obj.creation_date
                 try:
                     avg_hold_time = elapsed_time / item_obj.transfers
                 except ZeroDivisionError:
@@ -59,6 +61,13 @@ class ItemFilters:
                             'report_to': None,
                             'missing_status': False
                         })
+                self.db.query(TransferLog).filter(TransferLog.tx_id == transfers['tx_id']).update(
+                        {
+                            'id': item_id,
+                            'date': current_time,
+                            'to': transfer['args']['to'],
+                            'from': transfer['args']['from']
+                        }) 
                 self.db.commit()
 
         return True

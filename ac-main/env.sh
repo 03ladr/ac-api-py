@@ -1,0 +1,5 @@
+export CONTRACT_ADDRESS=""
+export WEB3_URL=""
+export JWTKEY=""
+export DATABASE_URL=""
+export IPFS_URL=""

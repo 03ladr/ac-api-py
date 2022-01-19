@@ -7,13 +7,13 @@ from methods.database.database import SessionLocal
 from methods.database import db_schemas
 # On-Chain Connectivity/Tooling
 from methods.onchain.onchain_config import w3, contract
-from config import CONTRACT_CREATOR
 # User Methods
 from methods.users import user_methods
 # Curses dependency
 from cursesmenu import *
 from cursesmenu.items import *
-
+# Utilities
+from os import getenv
 
 Session = SessionLocal()
 
@@ -39,7 +39,7 @@ def set_operator():
     user_publickey = user_methods.get_user_publickey(Session, user_attr)
     contract.functions.grantRole(user_methods.OPERATOR_ROLE,
                                  user_publickey.decode()).transact(
-                                     {"from": CONTRACT_CREATOR})
+                                     {"from": })
     Session.query(
         db_schemas.User).filter(db_schemas.User.publickey == user_publickey).update({
             "type":

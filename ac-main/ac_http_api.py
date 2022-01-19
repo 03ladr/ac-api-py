@@ -3,7 +3,7 @@ Authentichain HTTP API
 FastAPI-Based
 """
 # Configuration Variables
-from config import JWTKEY
+from os import getenv
 # Typing
 from typing import Optional, List
 # Database Connectivity/Tooling
@@ -51,7 +51,7 @@ def create_jwt(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     else:
         expire = datetime.utcnow() + timedelta(minutes=30)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, JWTKEY, algorithm="HS256")
+    encoded_jwt = jwt.encode(to_encode, getenv('JWTKEY'), algorithm="HS256")
     return encoded_jwt
 
 

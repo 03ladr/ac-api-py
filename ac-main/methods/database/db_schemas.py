@@ -38,8 +38,5 @@ class Item(Base):
     """
     __tablename__ = "items"
     id = Column(Integer, primary_key=True, index=True)
-    transfers = Column(Integer)
-    holdtime_avg = Column(Interval)
-    creation_date = Column(DateTime)
-    missing_status = Column(Boolean, default=False)
-    report_to = Column(String, nullable=True)
+    brand = Column(String, index=True)
+    
