@@ -1,15 +1,20 @@
 """
 On-Chain Methods/Functions
 """
-# AES decryption module
-from ..cryptography.aes_methods import aes_decrypt
-# Transaction Sending Object
-from .onchain_objects import TXReqs
-# Exception Objects
-from ..exceptions.exception_objects import PrivateKeyError
-from eth_utils.exceptions import ValidationError
-# SignedTransaction Object
 from eth_account.datastructures import SignedTransaction
+from eth_utils.exceptions import ValidationError
+from sqlalchemy.orm import Session, load_only
+
+from ..cryptography.aes_methods import aes_decrypt
+from ..database import db_schemas
+from ..exceptions.exception_objects import (
+    NonExistentTokenError,
+    NotOperatorError,
+    PrivateKeyError,
+)
+from .ItemContractABI import ItemContractABI
+from .MintContractABI import MintContractABI
+from .onchain_objects import TXReqs
 
 
 def buildtx(function, tx_reqs: TXReqs) -> SignedTransaction:
@@ -35,3 +40,36 @@ def buildtx(function, tx_reqs: TXReqs) -> SignedTransaction:
     # Signing and returning transaction object
     signed_tx = sender.signTransaction(rawtx)
     return signed_tx
+
+
+def build_mint_tx(db_user: db_schemas.User, passkey: str,
+                  database: Session) -> TXReqs:
+    """
+    Gets user account and returns it if an operator
+    """
+    if db_user.type != "operator":
+        raise NotOperatorError
+    db_operator = database.query(db_schemas.Operator).filter(
+        db_schemas.Operator.id == db_user.id).options(
+            load_only('contract')).first()
+    if not db_operator:
+        raise NotOperatorError
+    return TXReqs(privatekey=db_user.accesskey,
+                  contract=db_operator.contract.decode(),
+                  abi=MintContractABI,
+                  passkey=passkey)
+
+
+def build_item_call(database: Session, item_id: int) -> TXReqs:
+    db_item = database.query(db_schemas.Item).filter(
+        db_schemas.Item.id == item_id).options(load_only('contract')).first()
+    if not db_item:
+        raise NonExistentTokenError
+    return TXReqs(contract=db_item.contract.decode(), abi=ItemContractABI)
+
+
+def build_item_tx(database: Session, db_user: db_schemas.User, passkey: str,
+                  item_id: int) -> TXReqs:
+    tx_reqs = build_item_call(database, item_id)
+    tx_reqs.privatekey, tx_reqs.passkey = db_user.accesskey, passkey
+    return tx_reqs

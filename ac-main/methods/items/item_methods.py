@@ -1,24 +1,22 @@
 """
 Item Token Methods/Functions
 """
-# Utilities
 import json
-from urllib.request import urlopen
-# Typing
 from typing import List
-# Database tooling
+from urllib.request import urlopen
+
+from eth_account import Account
 from sqlalchemy.orm import Session, load_only
-# Local modules
-from . import item_objects
+from web3 import exceptions
+
+from ..cryptography.aes_methods import aes_decrypt
 from ..database import db_schemas
-from ..users.user_methods import get_user_publickey
-from ..users.user_objects import User
+from ..exceptions.exception_handlers import OnChainExceptionHandler
+from ..exceptions.exception_objects import CredentialError, OwnershipError
 from ..onchain.onchain_methods import buildtx
 from ..onchain.onchain_objects import TXReqs
-# Error Handling
-import web3.exceptions as exceptions
-from ..exceptions.exception_handlers import OnChainExceptionHandler
-from ..exceptions.exception_objects import NonExistentTokenError, OwnershipError
+from ..users.user_methods import get_user_publickey
+from . import item_objects
 
 
 def create_item(ipfs, tx_reqs: TXReqs,
@@ -69,30 +67,17 @@ def transfer_item(database: Session, tx_reqs: TXReqs, item_id: int,
     return True
 
 
-def get_item(database: Session, tx_reqs: TXReqs, item_id: int) -> dict:
+def get_item(tx_reqs: TXReqs, item_id: int) -> dict:
     """
     Get Item Token (metadata) after validating existence in-database
     """
-    # Obtains items existence in-database
-    item_obj = database.query(
-        db_schemas.Item).filter(db_schemas.Item.id == item_id).first()
-    if not item_obj:
-        return None
     # Obtains and formats JSONized metadata
     metadata = get_metadata(tx_reqs, item_id)
-    metadata['transfer_count'] = item_obj.transfers
-    metadata['creation_date'] = item_obj.creation_date.strftime("%m/%d/%y")
-    # If an average hold time is recorded, add that data to the metadata
-    if item_obj.holdtime_avg:
-        metadata['avg_hold_time'] = str(
-            item_obj.holdtime_avg).split('.')[:-1][0]
+
+    # If an average hold time and creation date is recorded, add that data to the metadata
+
     # If set to stolen or lost, add report information to the metadata
-    if item_obj.missing_status == True:
-        report = {
-            'missing': item_obj.stolen_status,
-            'report_to': item_obj.report_to
-        }
-        metadata['report'] = report
+
     # Returns formatted metadata
     return metadata
 
@@ -113,15 +98,17 @@ def get_metadata(tx_reqs: TXReqs, item_id: int) -> dict:
     return metadata
 
 
+"""
 def get_user_items(database: Session, tx_reqs: TXReqs,
                    address: str) -> List[dict]:
-    """
-    Get Item Tokens currently owned by a user
-    """
+"""
+# Get Item Tokens currently owned by a user
+"""
     owned_ids = tx_reqs.contract.functions.ownedItemTokens(address).call()
-    owned_items = [get_item(database, tx_reqs, id) for id in owned_ids]
+    owned_items = [get_item(tx_reqs, id) for id in owned_ids]
     # Return list of item metadatas
     return owned_items
+"""
 
 
 def set_item_claimability(
@@ -137,8 +124,7 @@ def set_item_claimability(
         # change to assignment after updating contract
     except exceptions.ContractLogicError as Error:
         OnChainExceptionHandler(Error)
-    # Return newly set claimability status
-    return None
+    # Returns?
 
 
 def get_item_claimability(tx_reqs: TXReqs, item_id: int) -> bool:
@@ -182,7 +168,7 @@ def burn_item_token(tx_reqs: TXReqs, item_id: int) -> True:
     return True
 
 
-def toggle_item_missing(database: Session, tx_reqs: TXReqs, sender: User,
+def toggle_item_missing(database: Session, tx_reqs: TXReqs,
                         item_id: int) -> bool:
     """
     Report item as stolen/missing
@@ -190,23 +176,26 @@ def toggle_item_missing(database: Session, tx_reqs: TXReqs, sender: User,
     # If the item token does not exist, raise exception
     try:
         item_owner = tx_reqs.contract.functions.ownerOf(item_id).call()
-    except:
-        raise NonExistentTokenError
+    except exceptions.ContractLogicError as Error:
+        OnChainExceptionHandler(Error)
+    # Obtain public key of caller
+    try:
+        address = Account.from_key(
+            aes_decrypt(tx_reqs.privatekey, tx_reqs.passkey)).address
+    except TypeError:
+        raise CredentialError
     # If the caller is not the token owner, raise exception
-    if sender.publickey.decode() != item_owner:
+    if address != item_owner:
         raise OwnershipError
     # Query db to check current missing status
     item_obj = database.query(
         db_schemas.Item).filter(db_schemas.Item.id == item_id).options(
             load_only('missing_status')).first()
     # Depending on whether the item is set as missing or not, construct an updating db query
-    if item_obj.missing_status == True:
-        db_update = {'report_to': None, 'missing_status': False}
-    elif item_obj.missing_status == False:
-        db_update = {
-            'report_to': sender.email,
-            'missing_status': True,
-        }
+    if item_obj.missing_status:
+        db_update = {'missing_status': False}
+    elif not item_obj.missing_status:
+        db_update = {'missing_status': True}
     # Dispatch db update
     database.query(db_schemas.Item).filter(
         db_schemas.Item.id == item_id).update(db_update)

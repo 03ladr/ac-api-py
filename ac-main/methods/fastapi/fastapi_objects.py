@@ -1,7 +1,6 @@
 """
 FastAPI-required objects
 """
-# Typing
 from pydantic import BaseModel
 
 

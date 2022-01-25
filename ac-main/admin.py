@@ -2,18 +2,15 @@
 Curses Admin Interface
 To be replaced with fastapi
 """
-# Cryptography modules
-from methods.database.database import SessionLocal
-from methods.database import db_schemas
-# On-Chain Connectivity/Tooling
-from methods.onchain.onchain_config import w3, contract
-# User Methods
-from methods.users import user_methods
-# Curses dependency
+from os import getenv
+
 from cursesmenu import *
 from cursesmenu.items import *
-# Utilities
-from os import getenv
+from methods.database import db_schemas
+from methods.database.database import SessionLocal
+from methods.onchain.onchain_config import contract, w3
+from methods.users import user_methods
+
 
 Session = SessionLocal()
 
@@ -37,9 +34,9 @@ def set_operator():
     user_attr = input("(Select User)> ")
     operator_brand = input("(Select Brand)> ")
     user_publickey = user_methods.get_user_publickey(Session, user_attr)
-    contract.functions.grantRole(user_methods.OPERATOR_ROLE,
+    contract.functions.grantRole(OPERATOR_ROLE,
                                  user_publickey.decode()).transact(
-                                     {"from": })
+                                     {"from": getenv('CONTRACT_CREATOR')})
     Session.query(
         db_schemas.User).filter(db_schemas.User.publickey == user_publickey).update({
             "type":
@@ -65,7 +62,7 @@ def credit_account():
             'from': sender.address,
             'gas': 21000,
             'gasPrice': w3.eth.gasPrice,
-            'nonce': w3.eth.getTransactionCount(sender.address) 
+            'nonce': w3.eth.getTransactionCount(sender.address)
             }
     signed_tx = sender.signTransaction(raw_tx)
     w3.eth.sendRawTransaction(signed_tx.rawTransaction)

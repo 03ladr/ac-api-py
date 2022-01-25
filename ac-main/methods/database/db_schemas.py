@@ -1,11 +1,11 @@
 """
 Database schemas
 """
-# Utilities
 import enum
-# Database Connectivity/Tooling
-from sqlalchemy import Enum, Column, Integer, String, Boolean, DateTime, Interval
+
+from sqlalchemy import Column, Enum, Integer, String
 from sqlalchemy.types import LargeBinary
+
 from .database import Base
 
 
@@ -29,7 +29,15 @@ class User(Base):
     username = Column(String, unique=True, nullable=True)
     email = Column(String, unique=True, nullable=True)
     type = Column(Enum(AccountType), server_default="user")
-    brand = Column(String, unique=True, nullable=True)
+
+
+class Operator(Base):
+    """
+    Opereator Database Table
+    """
+    __tablename__ = "operators"
+    id = Column(String, primary_key=True, index=True)
+    contract = Column(LargeBinary, unique=True, index=True)
 
 
 class Item(Base):
@@ -38,5 +46,4 @@ class Item(Base):
     """
     __tablename__ = "items"
     id = Column(Integer, primary_key=True, index=True)
-    brand = Column(String, index=True)
-    
+    contract = Column(LargeBinary, index=True)

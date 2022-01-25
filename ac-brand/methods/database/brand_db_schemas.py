@@ -1,12 +1,21 @@
 """
 Database schemas
 """
-# Utilities
 import enum
-# Database Connectivity/Tooling
-from sqlalchemy import Enum, Column, Integer, String, Boolean, DateTime, Interval, INET
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Integer,
+    Interval,
+    String,
+)
 from sqlalchemy.types import LargeBinary
+from sqlalchemy.dialects.postgresql import INET
+
 from .database import Base
+
 
 class Item(Base):
     """

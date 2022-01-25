@@ -55,3 +55,12 @@ class UnknownAccountError(Exception):
     def __init__(self, message="User not found"):
         self.message = message
         super().__init__(self.message)
+
+
+class CredentialError(Exception):
+    """
+    Exception raised upon incorrect login credentials
+    """
+    def __init__(self, message="Credential Exception"):
+        self.message = message
+        super().__init__(self.message)

@@ -1,24 +1,18 @@
 """
 User Methods/Functions
 """
-# Cryptography modules
-from ..cryptography import aes_methods, sha_methods
-# Database Connectivity/Tooling
 from shortuuid import ShortUUID
-from sqlalchemy.orm import Session, load_only
 from sqlalchemy import or_
+from sqlalchemy.orm import Session, load_only
+
+from ..cryptography import aes_methods, sha_methods
 from ..database import db_schemas
-# User Modules
-from . import user_objects
-# Error Handling
 from ..exceptions.exception_objects import UnknownAccountError
-
-
-OPERATOR_ROLE = "0x97667070c54ef182b0f5858b034beac1b6f3089aa2d3188bb1e8929f4fa9b929"
+from . import user_objects
 
 
 def create_user(database: Session, w3,
-                user: user_objects.User) -> user_objects.User:
+                user: user_objects.User) -> db_schemas.User:
     """
     Create User Account
     """
@@ -47,7 +41,7 @@ def create_user(database: Session, w3,
 
 
 def verify_user(database: Session, user_attr: str,
-                passkey: str) -> user_objects.User:
+                passkey: str) -> db_schemas.User:
     """
     Verify user by password
     """
@@ -60,7 +54,7 @@ def verify_user(database: Session, user_attr: str,
     return db_user
 
 
-def get_user_by(database: Session, user_attr: str) -> user_objects.User:
+def get_user_by(database: Session, user_attr: str) -> db_schemas.User:
     """
     Get user by:
         - username
@@ -96,19 +90,8 @@ def get_user_publickey(database: Session, user_attr: str) -> bytes:
 
 def get_users(database: Session,
               skip: int = 0,
-              limit: int = 100) -> user_objects.User:
+              limit: int = 100) -> db_schemas.User:
     """
     Get all users
     """
     return database.query(db_schemas.User).offset(skip).limit(limit).all()
-
-
-def is_operator(contract, user: user_objects.User) -> bool:
-    """
-    Verify that user is an operator. Returns True/False
-    """
-    status = contract.functions.hasRole(OPERATOR_ROLE, user.publickey.decode())
-    if user.type == db_schemas.AccountType.operator and status:
-        return True
-    else:
-        return False

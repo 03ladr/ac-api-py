@@ -1,11 +1,11 @@
 """
 Smart contract event log --> database population module
 """
-# Utilities
 from datetime import datetime
-# Database Dependencies
-from ..db_schemas import Item, TransferLog
+
 from sqlalchemy.orm import load_only
+
+from ..db_schemas import Item, TransferLog
 
 
 class ItemFilters:
@@ -33,7 +33,9 @@ class ItemFilters:
         if mints:
             for mint in mints:
                 item_id = mint['args']['itemid']
-                db_item = Item(id=item_id, creation_date=datetime.now(), transfers=0)
+                db_item = Item(id=item_id,
+                               creation_date=datetime.now(),
+                               transfers=0)
                 self.db.add(db_item)
                 self.db.commit()
 
@@ -48,26 +50,33 @@ class ItemFilters:
                 item_id = transfer['args']['itemid']
                 item_obj = self.db.query(Item).filter(
                     Item.id == item_id).options(
-                        load_only('transfers', 'creation_date')).first() 
+                        load_only('transfers', 'creation_date')).first()
                 elapsed_time = current_time - item_obj.creation_date
                 try:
                     avg_hold_time = elapsed_time / item_obj.transfers
                 except ZeroDivisionError:
                     avg_hold_time = elapsed_time
-                self.db.query(Item).filter(Item.id == item_id).update(
-                        {
-                            'transfers': item_obj.transfers + 1,
-                            'holdtime_avg': avg_hold_time,
-                            'report_to': None,
-                            'missing_status': False
-                        })
-                self.db.query(TransferLog).filter(TransferLog.tx_id == transfers['tx_id']).update(
-                        {
-                            'id': item_id,
-                            'date': current_time,
-                            'to': transfer['args']['to'],
-                            'from': transfer['args']['from']
-                        }) 
+                self.db.query(Item).filter(Item.id == item_id).update({
+                    'transfers':
+                    item_obj.transfers + 1,
+                    'holdtime_avg':
+                    avg_hold_time,
+                    'report_to':
+                    None,
+                    'missing_status':
+                    False
+                })
+                self.db.query(TransferLog).filter(
+                    TransferLog.tx_id == transfers['tx_id']).update({
+                        'id':
+                        item_id,
+                        'date':
+                        current_time,
+                        'to':
+                        transfer['args']['to'],
+                        'from':
+                        transfer['args']['from']
+                    })
                 self.db.commit()
 
         return True

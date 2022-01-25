@@ -3,6 +3,7 @@ AES Encrypt/Decrypt Modules
 """
 from Crypto.Cipher import AES
 
+
 IV = bytes(16 * "\x00", "utf-8")
 pad = lambda entry: bytes(
     (entry + (16 - len(entry) % 16) * chr(16 - len(entry) % 16)), 'utf-8')

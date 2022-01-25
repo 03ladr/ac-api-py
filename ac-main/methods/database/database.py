@@ -2,13 +2,13 @@
 Database connectivity
 Using PostgreSQL
 """
-# Config Variables
 from os import getenv
-# Database Connectivity/Tooling
+
+import ipfshttpclient
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import ipfshttpclient
+
 
 # Connecting to database and creating a usage session
 engine = create_engine(getenv('DATABASE_URL'))
