@@ -33,7 +33,6 @@ from methods.onchain.onchain_methods import (
 )
 from methods.users import user_methods, user_objects
 
-
 # Initialization
 """ DB INIT """
 load_db()
@@ -130,20 +129,18 @@ async def current_user_info(current_user: user_objects.User = Depends(
     return current_user
 
 
-"""
-@app.get("/users/items/view", tags=[tags[0]])
-async def view_items(current_user: user_objects.User = Depends(
-    get_current_user),
-                     database: Session = Depends(get_db)) -> List:
-"""
-#View owned items of currently logged in user
-"""
-    owned_items = item_methods.get_user_items(database, TXReqs(),
-                                              current_user.publickey.decode())
-    if not owned_items:
-        raise HTTPException(status_code=404, detail="No items found.")
-    return owned_items
-"""
+# @app.get("/users/items/view", tags=[tags[0]])
+# async def view_items(current_user: user_objects.User = Depends(
+#     get_current_user),
+#                      database: Session = Depends(get_db)) -> List:
+#     """
+#     View owned items of currently logged in user
+#     """
+#     owned_items = item_methods.get_user_items(database, TXReqs(),
+#                                               current_user.publickey.decode())
+#     if not owned_items:
+#         raise HTTPException(status_code=404, detail="No items found.")
+#     return owned_items
 
 
 @app.post("/users/items/transfer", tags=[tags[0]])
@@ -232,19 +229,17 @@ async def toggle_item_claimability(
     return "Item claimability changed."
 
 
-"""
-@app.post("/items/set/missing", tags=[tags[1]])
-async def toggle_item_missing(
-        item_id: int,
-        database: Session = Depends(get_db),
-        current_user: user_objects.User = Depends(get_current_user)
-) -> str:
-"""
-# Toggle item missing status
-"""
-    missing_status = item_methods.toggle_item_missing(database, TXReqs(), current_user, item_id)
-    return f"{item_id} Missing Status: {missing_status}"
-"""
+# @app.post("/items/set/missing", tags=[tags[1]])
+# async def toggle_item_missing(
+#         item_id: int,
+#         database: Session = Depends(get_db),
+#         current_user: user_objects.User = Depends(get_current_user)
+# ) -> str:
+#     """
+#     Toggle item missing status
+#     """
+#     missing_status = item_methods.toggle_item_missing(database, TXReqs(), current_user, item_id)
+#     return f"{item_id} Missing Status: {missing_status}"
 
 
 @app.post("/items/forfeit", tags=[tags[1]])
