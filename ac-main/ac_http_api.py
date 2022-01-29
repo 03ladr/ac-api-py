@@ -27,11 +27,13 @@ from methods.fastapi.fastapi_objects import Token, tags
 from methods.items import item_methods, item_objects
 from methods.onchain.onchain_config import w3
 from methods.onchain.onchain_methods import (
+    build_burn_tx,
     build_item_call,
     build_item_tx,
     build_mint_tx,
 )
 from methods.users import user_methods, user_objects
+
 
 # Initialization
 """ DB INIT """
@@ -155,8 +157,8 @@ async def transfer_item(
     Transfer item token
     """
     transferred_item = item_methods.transfer_item(
-        database, build_item_tx(database, current_user, passkey, item_id),
-        item_id, receiver_attr)
+        item_id, receiver_attr,
+        build_item_tx(database, current_user, passkey, item_id), database)
     if not transferred_item:
         raise HTTPException(status_code=400, detail="Transfer failed.")
     return f"Item {item_id} transferred to user {receiver_attr}."
@@ -193,7 +195,7 @@ async def create_item(
     Create item token
     """
     created_item = item_methods.create_item(
-        ipfs, build_mint_tx(current_user, passkey, database), item_obj_list)
+        item_obj_list, ipfs, build_mint_tx(current_user, passkey, database))
     if not created_item:
         raise HTTPException(status_code=400, detail="Item creation failed.")
     return "Item created."
@@ -210,7 +212,7 @@ async def claim_item(
     Claim Item Token
     """
     item_methods.claim_item(
-        build_item_tx(database, current_user, passkey, item_id), item_id)
+        item_id, build_item_tx(database, current_user, passkey, item_id))
     return f"Item {item_id} has been claimed"
 
 
@@ -225,7 +227,7 @@ async def toggle_item_claimability(
     Toggle item claimability
     """
     item_methods.set_item_claimability(
-        build_item_tx(database, current_user, passkey, item_id), item_id)
+        item_id, build_item_tx(database, current_user, passkey, item_id))
     return "Item claimability changed."
 
 
@@ -253,7 +255,7 @@ async def forfeit_item(
     Forfeit/burn Item Token
     """
     item_methods.burn_item_token(
-        build_item_tx(database, current_user, passkey, item_id), item_id)
+        item_id, build_burn_tx(item_id, current_user, passkey, database))
     return f"Item {item_id} forfeited."
 
 
@@ -263,8 +265,8 @@ def get_item(
     """
     Display item token details by ID
     """
-    item_obj = item_methods.get_item(build_item_call(database, item_id),
-                                     item_id)
+    item_obj = item_methods.get_item(item_id,
+                                     build_item_call(item_id, database))
     if item_obj is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return item_obj
@@ -280,7 +282,7 @@ async def view_item_claimability(
     View item claimability
     """
     item_claimability = item_methods.get_item_claimability(
-        build_item_call(database, item_id), item_id)
+        item_id, build_item_call(item_id, database))
     return f"Item claimability status: {item_claimability}"
 
 
@@ -292,7 +294,7 @@ async def view_item_owner(
     """
     View owner of provided item token
     """
-    tx_reqs = build_item_call(database, item_id)
+    tx_reqs = build_item_call(item_id, database)
     try:
         owner_publickey = tx_reqs.contract.functions.ownerOf(item_id).call()
     except:

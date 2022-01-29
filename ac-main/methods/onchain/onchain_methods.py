@@ -1,6 +1,8 @@
 """
 On-Chain Methods/Functions
 """
+from typing import Union
+
 from eth_account.datastructures import SignedTransaction
 from eth_utils.exceptions import ValidationError
 from sqlalchemy.orm import Session, load_only
@@ -13,11 +15,12 @@ from ..exceptions.exception_objects import (
     PrivateKeyError,
 )
 from .ItemContractABI import ItemContractABI
-from .MintContractABI import MintContractABI
-from .onchain_objects import TXReqs
+from .ProxyContractABI import ProxyContractABI
+from .onchain_objects import ProxyTXReqs, TXReqs
 
 
-def buildtx(function, tx_reqs: TXReqs) -> SignedTransaction:
+def buildtx(function, tx_reqs: Union[TXReqs,
+                                     ProxyTXReqs]) -> SignedTransaction:
     """
     Send On-Chain Transaction
     """
@@ -54,13 +57,24 @@ def build_mint_tx(db_user: db_schemas.User, passkey: str,
             load_only('contract')).first()
     if not db_operator:
         raise NotOperatorError
-    return TXReqs(privatekey=db_user.accesskey,
-                  contract=db_operator.contract.decode(),
-                  abi=MintContractABI,
-                  passkey=passkey)
+    return ProxyTXReqs(target=db_operator.contract.decode(),
+                       privatekey=db_operator.accesskey,
+                       passkey=passkey)
 
 
-def build_item_call(database: Session, item_id: int) -> TXReqs:
+def build_burn_tx(item_id: int, db_user: db_schemas.User, passkey: str,
+                  database: Session) -> TXReqs:
+    """
+    Gets user account and returns it if an operator
+    """
+    db_item = database.query(db_schemas.Item).filter(
+        db_schemas.Item.id == item_id).options(load_only('contract')).first()
+    return ProxyTXReqs(target=db_item.contract.decode(),
+                       privatekey=db_user.accesskey,
+                       passkey=passkey)
+
+
+def build_item_call(item_id: int, database: Session) -> TXReqs:
     db_item = database.query(db_schemas.Item).filter(
         db_schemas.Item.id == item_id).options(load_only('contract')).first()
     if not db_item:
@@ -68,8 +82,8 @@ def build_item_call(database: Session, item_id: int) -> TXReqs:
     return TXReqs(contract=db_item.contract.decode(), abi=ItemContractABI)
 
 
-def build_item_tx(database: Session, db_user: db_schemas.User, passkey: str,
-                  item_id: int) -> TXReqs:
-    tx_reqs = build_item_call(database, item_id)
+def build_item_tx(item_id: int, db_user: db_schemas.User, passkey: str,
+                  database: Session) -> TXReqs:
+    tx_reqs = build_item_call(item_id, database)
     tx_reqs.privatekey, tx_reqs.passkey = db_user.accesskey, passkey
     return tx_reqs

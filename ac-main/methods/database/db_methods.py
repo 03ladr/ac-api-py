@@ -5,9 +5,9 @@ from asyncio import sleep
 
 from sqlalchemy.orm import Session
 
-from ..onchain.onchain_config import mint_contract
+from ..onchain.onchain_config import proxy_contract
 from .database import Base, SessionLocal, engine
-from .utils.db_filter import ItemFilters
+from .db_filter import TokenFilters
 
 
 def load_db() -> bool:
@@ -22,7 +22,7 @@ async def populate_db() -> None:
     """
     Smart contract event log filter -> database population
     """
-    itemfilter = ItemFilters(SessionLocal(), mint_contract)
+    itemfilter = TokenFilters(SessionLocal(), proxy_contract)
     while True:
         itemfilter.filter()
         await sleep(5)

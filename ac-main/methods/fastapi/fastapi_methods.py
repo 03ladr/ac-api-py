@@ -11,6 +11,7 @@ from ..database.db_methods import get_db
 from ..exceptions.exception_objects import CredentialError
 from ..fastapi.fastapi_config import oauth2_scheme
 
+
 JWTKEY = getenv('JWTKEY')
 
 

@@ -60,23 +60,14 @@ class ItemFilters:
                     'transfers':
                     item_obj.transfers + 1,
                     'holdtime_avg':
-                    avg_hold_time,
-                    'report_to':
-                    None,
-                    'missing_status':
-                    False
+                    avg_hold_time
                 })
-                self.db.query(TransferLog).filter(
-                    TransferLog.tx_id == transfers['tx_id']).update({
-                        'id':
-                        item_id,
-                        'date':
-                        current_time,
-                        'to':
-                        transfer['args']['to'],
-                        'from':
-                        transfer['args']['from']
-                    })
+                logged_transfer = TransferLog(
+                    item_id=item_id,
+                    date=current_time,
+                    sent_to=transfer['args']['to'],
+                    sent_from=transfer['args']['from'])
+                self.db.add(logged_transfer)
                 self.db.commit()
 
         return True

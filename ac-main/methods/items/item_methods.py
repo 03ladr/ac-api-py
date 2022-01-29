@@ -14,13 +14,13 @@ from ..database import db_schemas
 from ..exceptions.exception_handlers import OnChainExceptionHandler
 from ..exceptions.exception_objects import CredentialError, OwnershipError
 from ..onchain.onchain_methods import buildtx
-from ..onchain.onchain_objects import TXReqs
+from ..onchain.onchain_objects import ProxyTXReqs, TXReqs
 from ..users.user_methods import get_user_publickey
 from . import item_objects
 
 
-def create_item(ipfs, tx_reqs: TXReqs,
-                item_obj_list: List[item_objects.ItemCreate]) -> bool:
+def create_item(item_obj_list: List[item_objects.ItemCreate], ipfs,
+                tx_reqs: ProxyTXReqs) -> bool:
     """
     Create Item Token
     """
@@ -30,8 +30,8 @@ def create_item(ipfs, tx_reqs: TXReqs,
         # Mints Item NFT via smart contract
         try:
             signed_tx = buildtx(
-                tx_reqs.contract.functions.mintItemToken(metadata_uri),
-                tx_reqs)
+                tx_reqs.contract.functions.MintToken(tx_reqs.target,
+                                                     metadata_uri), tx_reqs)
             tx_reqs.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
         except exceptions.ContractLogicError as Error:
             OnChainExceptionHandler(Error)
@@ -49,8 +49,8 @@ def create_metadata(ipfs, item_obj: item_objects.ItemCreate) -> str:
     return "http://127.0.0.1:8080/ipfs/{cid}".format(cid=ipfs_metadata)
 
 
-def transfer_item(database: Session, tx_reqs: TXReqs, item_id: int,
-                  receiver: str) -> bool:
+def transfer_item(item_id: int, receiver: str, tx_reqs: TXReqs,
+                  database: Session) -> bool:
     """
     Transfer Item Token
     """
@@ -67,12 +67,12 @@ def transfer_item(database: Session, tx_reqs: TXReqs, item_id: int,
     return True
 
 
-def get_item(tx_reqs: TXReqs, item_id: int) -> dict:
+def get_item(item_id: int, tx_reqs: TXReqs) -> dict:
     """
     Get Item Token (metadata) after validating existence in-database
     """
     # Obtains and formats JSONized metadata
-    metadata = get_metadata(tx_reqs, item_id)
+    metadata = get_metadata(item_id, tx_reqs)
 
     # If an average hold time and creation date is recorded, add that data to the metadata
 
@@ -82,7 +82,7 @@ def get_item(tx_reqs: TXReqs, item_id: int) -> dict:
     return metadata
 
 
-def get_metadata(tx_reqs: TXReqs, item_id: int) -> dict:
+def get_metadata(item_id: int, tx_reqs: TXReqs) -> dict:
     """
     Get Item Token metadata
     """
@@ -98,22 +98,20 @@ def get_metadata(tx_reqs: TXReqs, item_id: int) -> dict:
     return metadata
 
 
-"""
-def get_user_items(database: Session, tx_reqs: TXReqs,
-                   address: str) -> List[dict]:
-"""
-# Get Item Tokens currently owned by a user
-"""
-    owned_ids = tx_reqs.contract.functions.ownedItemTokens(address).call()
-    owned_items = [get_item(tx_reqs, id) for id in owned_ids]
-    # Return list of item metadatas
-    return owned_items
-"""
+# def get_user_items(database: Session, tx_reqs: TXReqs,
+#                    address: str) -> List[dict]:
+#     """
+#     Get Item Tokens currently owned by a user
+#     """
+#     owned_ids = tx_reqs.contract.functions.ownedItemTokens(address).call()
+#     owned_items = [get_item(tx_reqs, id) for id in owned_ids]
+#     # Return list of item metadatas
+#     return owned_items
 
 
 def set_item_claimability(
-        tx_reqs: TXReqs,
-        item_id: int) -> None:  # return to bool after updating contract
+        item_id: int,
+        tx_reqs: TXReqs) -> None:  # return to bool after updating contract
     """
     Set claimability status of an Item Token
     """
@@ -127,7 +125,7 @@ def set_item_claimability(
     # Returns?
 
 
-def get_item_claimability(tx_reqs: TXReqs, item_id: int) -> bool:
+def get_item_claimability(item_id: int, tx_reqs: TXReqs) -> bool:
     """
     Get claimability status of an Item Token
     """
@@ -140,7 +138,7 @@ def get_item_claimability(tx_reqs: TXReqs, item_id: int) -> bool:
     return item_claimability
 
 
-def claim_item(tx_reqs: TXReqs, item_id: int) -> True:
+def claim_item(item_id: int, tx_reqs: TXReqs) -> True:
     """
     Claim Item Token
     """
@@ -154,13 +152,14 @@ def claim_item(tx_reqs: TXReqs, item_id: int) -> True:
     return True
 
 
-def burn_item_token(tx_reqs: TXReqs, item_id: int) -> True:
+def burn_item_token(item_id: int, tx_reqs: ProxyTXReqs) -> True:
     """
     Burn Item Token
     """
     try:
-        signed_tx = buildtx(tx_reqs.contract.functions.burnItemToken(item_id),
-                            tx_reqs)
+        signed_tx = buildtx(
+            tx_reqs.contract.functions.BurnToken(tx_reqs.target, item_id),
+            tx_reqs)
         tx_reqs.w3.eth.sendRawTransaction(signed_tx.rawTransaction)
     except exceptions.ContractLogicError as Error:
         OnChainExceptionHandler(Error)
