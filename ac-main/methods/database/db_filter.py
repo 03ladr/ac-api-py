@@ -8,6 +8,7 @@ class TokenFilters:
     """
     Smart contract event log filter -
     Checks for mint, burn and deploy events
+    Stores result in postgres instance
     """
     def __init__(self, db, contract):
         self.db = db

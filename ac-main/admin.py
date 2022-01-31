@@ -11,7 +11,6 @@ from methods.database.database import SessionLocal
 from methods.onchain.onchain_config import w3
 from methods.users import user_methods
 
-
 Session = SessionLocal()
 
 
@@ -29,21 +28,16 @@ def user_interface():
 
 # def set_operator():
 #     """
-#     Set user as operator by attribute
-#     """
+#      Set user as operator by attribute
+#      """
 #     user_attr = input("(Select User)> ")
-#     operator_brand = input("(Select Brand)> ")
 #     user_publickey = user_methods.get_user_publickey(Session, user_attr)
 #     contract.functions.grantRole(OPERATOR_ROLE,
 #                                  user_publickey.decode()).transact(
 #                                      {"from": getenv('CONTRACT_CREATOR')})
-#     Session.query(
-#         db_schemas.User).filter(db_schemas.User.publickey == user_publickey).update({
-#             "type":
-#             "operator",
-#             "brand":
-#             operator_brand
-#         })
+#     Session.query(db_schemas.User).filter(
+#         db_schemas.User.publickey == user_publickey).update(
+#             {"type": "operator"})
 #     Session.commit()
 
 
@@ -51,8 +45,8 @@ def credit_account():
     """
     Credit given account with n-ether
     """
-    user_attr = input("(Select Recipient)> ")
-    sender_key = input("(Provide senders private key)> ")
+    user_attr, sender_key = input("(Select Recipient)> "), input(
+        "(Provide senders private key)> ")
     send_amount = w3.toWei(input("(Amount to credit recipient)> "), 'ether')
     sender = w3.eth.account.privateKeyToAccount(sender_key)
     db_user = user_methods.get_user_publickey(Session, user_attr)

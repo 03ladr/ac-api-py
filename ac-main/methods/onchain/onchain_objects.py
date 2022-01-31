@@ -8,7 +8,7 @@ from .onchain_config import proxy_contract, w3
 
 class TXReqs:
     """
-    TX Sending Object
+    Item Contract TX Sending Object
     """
     def __init__(self,
                  contract: str,
@@ -23,7 +23,7 @@ class TXReqs:
 
 class ProxyTXReqs:
     """
-    TX Sending Object
+    Proxy Contract TX Sending Object
     """
     def __init__(self, target: str, privatekey: bytes, passkey: str):
         self.w3 = w3

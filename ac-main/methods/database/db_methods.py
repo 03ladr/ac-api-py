@@ -20,7 +20,7 @@ def load_db() -> bool:
 
 async def populate_db() -> None:
     """
-    Smart contract event log filter -> database population
+    Proxy smart contract event log filter -> database population
     """
     itemfilter = TokenFilters(SessionLocal(), proxy_contract)
     while True:

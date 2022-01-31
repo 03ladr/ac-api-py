@@ -34,7 +34,6 @@ from methods.onchain.onchain_methods import (
 )
 from methods.users import user_methods, user_objects
 
-
 # Initialization
 """ DB INIT """
 load_db()
@@ -103,7 +102,7 @@ async def badacc_handler(request: Request,
 @app.post("/users/create", response_model=user_objects.User, tags=[tags[0]])
 async def create_user(
     user_obj: user_objects.UserBase, database: Session = Depends(get_db)
-) -> user_objects.User:
+) -> db_schemas.User:
     """
     Create user account
     """
@@ -124,7 +123,7 @@ async def create_user(
 
 @app.get("/users/current", response_model=user_objects.User, tags=[tags[0]])
 async def current_user_info(current_user: user_objects.User = Depends(
-    get_current_user)) -> user_objects.User:
+    get_current_user)) -> db_schemas.User:
     """
     View account details of currently logged in user
     """
@@ -169,7 +168,7 @@ def get_user(
     user_attr: str,
     database: Session = Depends(get_db),
     current_user: user_objects.User = Depends(get_current_user)
-) -> user_objects.UserDisplay:
+) -> db_schemas.User:
     """
     Display account details by value
     Acccepted queries:
@@ -290,7 +289,7 @@ async def view_item_claimability(
          response_model=user_objects.UserDisplay,
          tags=[tags[1]])
 async def view_item_owner(
-    item_id: int, database: Session = Depends(get_db)) -> str:
+    item_id: int, database: Session = Depends(get_db)) -> db_schemas.User:
     """
     View owner of provided item token
     """

@@ -22,7 +22,7 @@ from .onchain_objects import ProxyTXReqs, TXReqs
 def buildtx(function, tx_reqs: Union[TXReqs,
                                      ProxyTXReqs]) -> SignedTransaction:
     """
-    Send On-Chain Transaction
+    Builds and signs transaction to be dispatched on-chain
     """
     # Loading senders account
     privatekey = aes_decrypt(tx_reqs.privatekey, tx_reqs.passkey)
@@ -48,7 +48,7 @@ def buildtx(function, tx_reqs: Union[TXReqs,
 def build_mint_tx(db_user: db_schemas.User, passkey: str,
                   database: Session) -> TXReqs:
     """
-    Gets user account and returns it if an operator
+    Builds transaction sender object for proxy contract token minting
     """
     if db_user.type != "operator":
         raise NotOperatorError
@@ -65,7 +65,7 @@ def build_mint_tx(db_user: db_schemas.User, passkey: str,
 def build_burn_tx(item_id: int, db_user: db_schemas.User, passkey: str,
                   database: Session) -> TXReqs:
     """
-    Gets user account and returns it if an operator
+    Builds transaction sender object for proxy contract token burning
     """
     db_item = database.query(db_schemas.Item).filter(
         db_schemas.Item.id == item_id).options(load_only('contract')).first()
@@ -75,6 +75,9 @@ def build_burn_tx(item_id: int, db_user: db_schemas.User, passkey: str,
 
 
 def build_item_call(item_id: int, database: Session) -> TXReqs:
+    """
+    Builds basic call sender object for item contract interaction
+    """
     db_item = database.query(db_schemas.Item).filter(
         db_schemas.Item.id == item_id).options(load_only('contract')).first()
     if not db_item:
@@ -84,6 +87,9 @@ def build_item_call(item_id: int, database: Session) -> TXReqs:
 
 def build_item_tx(item_id: int, db_user: db_schemas.User, passkey: str,
                   database: Session) -> TXReqs:
+    """
+    Builds transaction sender object for item contract interaction
+    """
     tx_reqs = build_item_call(item_id, database)
     tx_reqs.privatekey, tx_reqs.passkey = db_user.accesskey, passkey
     return tx_reqs

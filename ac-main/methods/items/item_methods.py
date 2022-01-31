@@ -70,6 +70,7 @@ def transfer_item(item_id: int, receiver: str, tx_reqs: TXReqs,
 def get_item(item_id: int, tx_reqs: TXReqs) -> dict:
     """
     Get Item Token (metadata) after validating existence in-database
+    Must be reimplemented (refactor enabled this unusable with existing functionalities)
     """
     # Obtains and formats JSONized metadata
     metadata = get_metadata(item_id, tx_reqs)
