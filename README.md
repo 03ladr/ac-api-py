@@ -11,7 +11,7 @@ After the initial, fully functioning iteration, for a multitude of reasons, I de
 ## To-do
 1) Dockerization w/ convenient brand deploy script
 
-2) Revised inventory management/recording. As there is no longer one contract, this must be revised. Perhaps it can be stored off-chain.
+2) Revised inventory management/recording. As there is no longer one contract, this must be revised. Perhaps it can be stored off-chain w/ event filtering.
 
 
 ## Specs
